@@ -292,7 +292,7 @@ public record ApiResponse<T>(
 
 - List endpoints wrap their content in `ApiResponse<PageResponse<T>>` (`PageResponse` carries `content`, `page`, `size`, `totalElements`, `totalPages`).
 - For job-triggering endpoints, `data` holds a `JobLaunchResponse` (execution id, initial status) or a `PayrollRunResponse` (business-level `PayrollRun` state).
-- `GlobalExceptionHandler` (`@RestControllerAdvice`) always returns an `ApiResponse<Void>` with `success = false` for `ResourceNotFoundException` (404), validation errors (400), `BusinessRuleException` (422), and any other exception (500).
+- `GlobalExceptionHandler` (`@RestControllerAdvice`) always returns an `ApiResponse<ErrorResponse>` with `success = false` for `ResourceNotFoundException` (404), validation errors (400, field-level detail in `ErrorResponse.fieldErrors`), `BusinessRuleException` (422), and any other exception (500). `ErrorResponse` carries `timestamp`, `status`, `error`, `message`, `path`, and an optional `fieldErrors` list.
 
 ## Testing strategy
 
