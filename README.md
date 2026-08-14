@@ -363,7 +363,7 @@ Technical foundation: project scaffolding, Spring Batch/PostgreSQL setup, Docker
 
 - [ ] Initialize the project (Maven, Java 17, Spring Boot 4.1.x, `groupId com.edgareldy`, `artifactId spring-batch-tutorial`)
 - [ ] `.gitignore` (Maven `target/`, IDE files, `.env`)
-- [ ] Dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-batch`, `spring-boot-starter-validation`, `spring-boot-starter-actuator`, `flyway-core`, `postgresql`, `lombok`, `springdoc-openapi-starter-webmvc-ui`
+- [ ] Dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-batch`, `spring-boot-starter-validation`, `spring-boot-starter-actuator`, `flyway-core`, `flyway-database-postgresql` (Flyway 9+ split PostgreSQL support into its own module), `postgresql`, `lombok`, `springdoc-openapi-starter-webmvc-ui`
 - [ ] Test dependencies: `spring-boot-starter-test`, `spring-batch-test`, `testcontainers`
 - [ ] Package layout above, under `com.edgareldy.springbatchtutorial` - `entity`/`repository`/`batch` stay empty until later branches populate them
 - [ ] `BatchConfig`: `JobRepository` and `PlatformTransactionManager` explicitly configured against the same PostgreSQL database as the business schema
