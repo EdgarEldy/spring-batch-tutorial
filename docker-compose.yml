@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-spring_batch_tutorial}
+      POSTGRES_USER: ${POSTGRES_USER:-spring_batch_tutorial}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-spring_batch_tutorial}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-spring_batch_tutorial}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/spring_batch_tutorial}
+      DB_USERNAME: ${DB_USERNAME:-spring_batch_tutorial}
+      DB_PASSWORD: ${DB_PASSWORD:-spring_batch_tutorial}
+    ports:
+      - "8080:8080"
+
+volumes:
+  db-data:
