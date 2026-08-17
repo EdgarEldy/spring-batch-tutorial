@@ -2,6 +2,7 @@ package com.edgareldy.springbatchtutorial.service.impl;
 
 import com.edgareldy.springbatchtutorial.entity.PayrollRun;
 import com.edgareldy.springbatchtutorial.entity.PayrollRunStatus;
+import com.edgareldy.springbatchtutorial.exception.BusinessRuleException;
 import com.edgareldy.springbatchtutorial.exception.ResourceNotFoundException;
 import com.edgareldy.springbatchtutorial.repository.PayrollRunRepository;
 import com.edgareldy.springbatchtutorial.service.PayrollRunService;
@@ -40,5 +41,17 @@ public class PayrollRunServiceImpl implements PayrollRunService {
     public PayrollRun getRun(Long id) {
         return payrollRunRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PayrollRun not found: " + id));
+    }
+
+    @Override
+    public PayrollRun resumeRun(Long id) {
+        PayrollRun payrollRun = getRun(id);
+        if (payrollRun.getStatus() != PayrollRunStatus.AWAITING_REVIEW) {
+            throw new BusinessRuleException(
+                    "PayrollRun " + id + " cannot be resumed: status is " + payrollRun.getStatus()
+                            + ", expected AWAITING_REVIEW");
+        }
+        payrollRun.setStatus(PayrollRunStatus.STARTED);
+        return payrollRunRepository.save(payrollRun);
     }
 }
