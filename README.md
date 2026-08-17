@@ -292,7 +292,7 @@ public record ApiResponse<T>(
 
 - List endpoints wrap their content in `ApiResponse<PageResponse<T>>` (`PageResponse` carries `content`, `page`, `size`, `totalElements`, `totalPages`).
 - For job-triggering endpoints, `data` holds a `JobLaunchResponse` (execution id, initial status) or a `PayrollRunResponse` (business-level `PayrollRun` state).
-- `GlobalExceptionHandler` (`@RestControllerAdvice`) always returns an `ApiResponse<Void>` with `success = false` for `ResourceNotFoundException` (404), validation errors (400), `BusinessRuleException` (422), and any other exception (500).
+- `GlobalExceptionHandler` (`@RestControllerAdvice`) always returns an `ApiResponse<ErrorResponse>` with `success = false` for `ResourceNotFoundException` (404), validation errors (400, field-level detail in `ErrorResponse.fieldErrors`), `BusinessRuleException` (422), and any other exception (500). `ErrorResponse` carries `timestamp`, `status`, `error`, `message`, `path`, and an optional `fieldErrors` list.
 
 ## Testing strategy
 
@@ -361,24 +361,24 @@ Technical foundation: project scaffolding, Spring Batch/PostgreSQL setup, Docker
 
 ### Tasks
 
-- [ ] Initialize the project (Maven, Java 17, Spring Boot 4.1.x, `groupId com.edgareldy`, `artifactId spring-batch-tutorial`)
-- [ ] `.gitignore` (Maven `target/`, IDE files, `.env`)
-- [ ] Dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-batch`, `spring-boot-starter-validation`, `spring-boot-starter-actuator`, `flyway-core`, `postgresql`, `lombok`, `springdoc-openapi-starter-webmvc-ui`
-- [ ] Test dependencies: `spring-boot-starter-test`, `spring-batch-test`, `testcontainers`
-- [ ] Package layout above, under `com.edgareldy.springbatchtutorial` - `entity`/`repository`/`batch` stay empty until later branches populate them
-- [ ] `BatchConfig`: `JobRepository` and `PlatformTransactionManager` explicitly configured against the same PostgreSQL database as the business schema
-- [ ] Flyway script `V1__init_schema.sql` (employees, timesheet_entries, payroll_runs, payslips, rejected_timesheet_entries)
-- [ ] Flyway script `V2__init_spring_batch_metadata.sql` (Spring Batch's official PostgreSQL schema)
-- [ ] `application.yml`: `spring.batch.job.enabled=false`
-- [ ] `GlobalExceptionHandler`, `ApiResponse<T>`, `PageResponse<T>`
-- [ ] `Employee` seed data (a small fixed set of employees, inserted via Flyway, since this tutorial doesn't build employee-management CRUD)
-- [ ] Sample file `sample-data/timesheets-import-sample.csv` (deliberately including a few invalid rows and one employee with an anomalously high hour count, to exercise later branches)
-- [ ] `docker-compose.yml` (app + PostgreSQL), `Dockerfile` (multi-stage)
-- [ ] `.github/workflows/ci.yml`: `mvn verify`
-- [ ] `.github/workflows/pr-checks.yml`: Conventional Commits check on the PR range
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md`
-- [ ] Unit tests: `GlobalExceptionHandler` maps each exception type to the right status, always inside an `ApiResponse` with `success = false`
-- [ ] E2E test: `GET /actuator/health` returns 200
+- [x] Initialize the project (Maven, Java 17, Spring Boot 4.1.x, `groupId com.edgareldy`, `artifactId spring-batch-tutorial`)
+- [x] `.gitignore` (Maven `target/`, IDE files, `.env`)
+- [x] Dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-batch`, `spring-boot-starter-validation`, `spring-boot-starter-actuator`, `flyway-core`, `flyway-database-postgresql` (Flyway 9+ split PostgreSQL support into its own module), `postgresql`, `lombok`, `springdoc-openapi-starter-webmvc-ui`
+- [x] Test dependencies: `spring-boot-starter-test`, `spring-batch-test`, `testcontainers`
+- [x] Package layout above, under `com.edgareldy.springbatchtutorial` - `entity`/`repository`/`batch` stay empty until later branches populate them
+- [x] `BatchConfig`: `JobRepository` and `PlatformTransactionManager` explicitly configured against the same PostgreSQL database as the business schema
+- [x] Flyway script `V1__init_schema.sql` (employees, timesheet_entries, payroll_runs, payslips, rejected_timesheet_entries)
+- [x] Flyway script `V2__init_spring_batch_metadata.sql` (Spring Batch's official PostgreSQL schema)
+- [x] `application.yml`: `spring.batch.job.enabled=false`
+- [x] `GlobalExceptionHandler`, `ApiResponse<T>`, `PageResponse<T>`
+- [x] `Employee` seed data (a small fixed set of employees, inserted via Flyway, since this tutorial doesn't build employee-management CRUD)
+- [x] Sample file `sample-data/timesheets-import-sample.csv` (deliberately including a few invalid rows and one employee with an anomalously high hour count, to exercise later branches)
+- [x] `docker-compose.yml` (app + PostgreSQL), `Dockerfile` (multi-stage)
+- [x] `.github/workflows/ci.yml`: `mvn verify`
+- [x] `.github/workflows/pr-checks.yml`: Conventional Commits check on the PR range
+- [x] `.github/PULL_REQUEST_TEMPLATE.md`
+- [x] Unit tests: `GlobalExceptionHandler` maps each exception type to the right status, always inside an `ApiResponse` with `success = false`
+- [x] E2E test: `GET /actuator/health` returns 200
 
 ## feature/timesheet-import
 
