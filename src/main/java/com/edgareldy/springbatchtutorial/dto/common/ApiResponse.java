@@ -5,6 +5,11 @@ import java.time.Instant;
 /**
  * Generic envelope wrapping every API response, success or error, so all
  * endpoints share the same response contract.
+ * <p>
+ * Created by Edgar Muhamyangabo on 8/15/26
+ * Author : Edgar Muhamyangabo
+ * Date : 8/15/26
+ * Project : spring-batch-tutorial
  */
 public record ApiResponse<T>(
         boolean success,
