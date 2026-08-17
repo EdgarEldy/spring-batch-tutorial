@@ -7,6 +7,8 @@ import com.edgareldy.springbatchtutorial.exception.ResourceNotFoundException;
 import com.edgareldy.springbatchtutorial.repository.PayrollRunRepository;
 import com.edgareldy.springbatchtutorial.service.PayrollRunService;
 import java.time.LocalDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -41,6 +43,11 @@ public class PayrollRunServiceImpl implements PayrollRunService {
     public PayrollRun getRun(Long id) {
         return payrollRunRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PayrollRun not found: " + id));
+    }
+
+    @Override
+    public Page<PayrollRun> listRuns(Pageable pageable) {
+        return payrollRunRepository.findAll(pageable);
     }
 
     @Override
