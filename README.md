@@ -434,14 +434,14 @@ Inserts a `JobExecutionDecider` between `aggregateHoursPerEmployee` and `calcula
 
 ### Tasks
 
-- [ ] `AnomalyReviewDecider` (`JobExecutionDecider`): reads the `hasAnomalies` flag set by `AggregateHoursTasklet`, returns a distinct `FlowExecutionStatus` (`REVIEW_REQUIRED` vs. `PROCEED`)
-- [ ] `FlagForReviewTasklet`: on the `REVIEW_REQUIRED` path, sets `PayrollRun.status = AWAITING_REVIEW` and ends the job flow (the `JobExecution` itself still completes normally - see [Why these library choices](#why-these-library-choices))
-- [ ] `PayrollJobConfig` updated: `.next(aggregateHoursPerEmployee).next(anomalyReviewDecider).on("REVIEW_REQUIRED").to(flagForReviewStep).from(anomalyReviewDecider).on("PROCEED").to(calculatePayslips)...`
-- [ ] Second `Job` bean, `payrollFinalizeJob`, reusing the existing `calculatePayslips` step (and, once available, `exportPayrollSummary`), launched by `POST /api/v1/payroll/runs/{id}/resume` after a human has reviewed the anomaly out-of-band; sets `PayrollRun.status` back to `STARTED` before launching
-- [ ] Business rule: `resume` on a `PayrollRun` not currently `AWAITING_REVIEW` returns a `BusinessRuleException` (422)
-- [ ] Unit tests: `AnomalyReviewDecider` returns the right status for both a clean and an anomalous `ExecutionContext`
-- [ ] Integration tests (Testcontainers): a run seeded with an anomalous employee stops at `AWAITING_REVIEW` with no `Payslip` rows written yet
-- [ ] E2E test: full anomaly path - import (with one employee over the threshold) → aggregate → flagged for review → `resume` → `calculatePayslips` runs and produces the missing payslips
+- [x] `AnomalyReviewDecider` (`JobExecutionDecider`): reads the `hasAnomalies` flag set by `AggregateHoursTasklet`, returns a distinct `FlowExecutionStatus` (`REVIEW_REQUIRED` vs. `PROCEED`)
+- [x] `FlagForReviewTasklet`: on the `REVIEW_REQUIRED` path, sets `PayrollRun.status = AWAITING_REVIEW` and ends the job flow (the `JobExecution` itself still completes normally - see [Why these library choices](#why-these-library-choices))
+- [x] `PayrollJobConfig` updated: `.next(aggregateHoursPerEmployee).next(anomalyReviewDecider).on("REVIEW_REQUIRED").to(flagForReviewStep).from(anomalyReviewDecider).on("PROCEED").to(calculatePayslips)...`
+- [x] Second `Job` bean, `payrollFinalizeJob`, reusing the existing `calculatePayslips` step (and, once available, `exportPayrollSummary`), launched by `POST /api/v1/payroll/runs/{id}/resume` after a human has reviewed the anomaly out-of-band; sets `PayrollRun.status` back to `STARTED` before launching
+- [x] Business rule: `resume` on a `PayrollRun` not currently `AWAITING_REVIEW` returns a `BusinessRuleException` (422)
+- [x] Unit tests: `AnomalyReviewDecider` returns the right status for both a clean and an anomalous `ExecutionContext`
+- [x] Integration tests (Testcontainers): a run seeded with an anomalous employee stops at `AWAITING_REVIEW` with no `Payslip` rows written yet
+- [x] E2E test: full anomaly path - import (with one employee over the threshold) → aggregate → flagged for review → `resume` → `calculatePayslips` runs and produces the missing payslips
 
 ## feature/export-and-scheduling
 
