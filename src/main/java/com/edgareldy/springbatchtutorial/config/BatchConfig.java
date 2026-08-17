@@ -12,6 +12,11 @@ import org.springframework.transaction.PlatformTransactionManager;
  * on spring-boot-starter-batch's implicit autoconfiguration, so both schemas
  * (business and BATCH_JOB_EXECUTION/BATCH_STEP_EXECUTION) always resolve to one
  * database.
+ * <p>
+ * Created by Edgar Muhamyangabo on 8/15/26
+ * Author : Edgar Muhamyangabo
+ * Date : 8/15/26
+ * Project : spring-batch-tutorial
  */
 @Configuration
 public class BatchConfig extends JdbcDefaultBatchConfiguration {
