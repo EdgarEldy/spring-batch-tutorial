@@ -3,9 +3,10 @@ package com.edgareldy.springbatchtutorial.service;
 import com.edgareldy.springbatchtutorial.entity.PayrollRun;
 
 /**
- * Contract for creating and looking up {@link PayrollRun} rows, the
- * business-level counterpart of a {@code monthlyPayrollJob} execution.
- * Implemented by {@code PayrollRunServiceImpl}.
+ * Contract for creating, looking up, and resuming {@link PayrollRun} rows,
+ * the business-level counterpart of a {@code monthlyPayrollJob}/
+ * {@code payrollFinalizeJob} execution. Implemented by
+ * {@code PayrollRunServiceImpl}.
  * <p>
  * Created by Edgar Muhamyangabo on 8/17/26
  * Author : Edgar Muhamyangabo
@@ -25,4 +26,13 @@ public interface PayrollRunService {
      * {@code ResourceNotFoundException} if none exists.
      */
     PayrollRun getRun(Long id);
+
+    /**
+     * Validates that the {@link PayrollRun} identified by {@code id} is
+     * currently {@code AWAITING_REVIEW} (throwing
+     * {@code BusinessRuleException} otherwise) and, on success, moves it
+     * back to {@code STARTED} ahead of {@code payrollFinalizeJob} being
+     * launched for it.
+     */
+    PayrollRun resumeRun(Long id);
 }
