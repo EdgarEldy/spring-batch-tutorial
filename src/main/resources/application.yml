@@ -13,3 +13,10 @@ payroll:
     csv-path: classpath:sample-data/timesheets-import-sample.csv
     chunk-size: 100
     skip-limit: 50
+  aggregation:
+    anomaly-threshold-hours: 300
+  calculation:
+    chunk-size: 20
+    overtime-threshold-hours: 160
+    overtime-multiplier: 1.5
+    deduction-rate: 0.15
