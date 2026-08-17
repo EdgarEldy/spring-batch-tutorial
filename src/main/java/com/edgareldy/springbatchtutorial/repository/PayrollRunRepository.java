@@ -5,8 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * Spring Data JPA repository for {@link PayrollRun}, used by
- * {@code PayrollRunService} to create and look up payroll run rows, and by
- * {@code TimesheetSkipListener} to attach rejected rows to the run in
+ * {@code PayrollRunService} to create, look up, and paginate payroll run
+ * rows (the inherited {@code findAll(Pageable)} backs
+ * {@code PayrollRunService.listRuns} for {@code GET /api/v1/payroll/runs}),
+ * and by {@code TimesheetSkipListener} to attach rejected rows to the run in
  * progress.
  * <p>
  * Created by Edgar Muhamyangabo on 8/17/26
