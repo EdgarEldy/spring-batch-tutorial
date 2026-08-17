@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * controller (directly or through a service) into a consistent
  * {@code ApiResponse<ErrorResponse>}, so callers never have to parse a
  * different error shape depending on which endpoint failed.
+ * <p>
+ * Created by Edgar Muhamyangabo on 8/15/26
+ * Author : Edgar Muhamyangabo
+ * Date : 8/15/26
+ * Project : spring-batch-tutorial
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
