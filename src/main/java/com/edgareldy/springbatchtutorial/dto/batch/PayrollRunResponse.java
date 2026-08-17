@@ -5,10 +5,11 @@ import java.time.LocalDateTime;
 
 /**
  * Business-level view of a {@code PayrollRun}, returned as the {@code data}
- * payload of {@code ApiResponse} by both
- * {@code POST /api/v1/payroll/runs} and {@code GET /api/v1/payroll/runs/{id}}
- * so a client can create a run and immediately poll its status with the
- * same shape.
+ * payload of {@code ApiResponse} by every payroll run endpoint
+ * ({@code POST /api/v1/payroll/runs}, {@code GET .../{id}},
+ * {@code GET /api/v1/payroll/runs} (paginated), and
+ * {@code POST .../{id}/resume}) so a client always sees the same shape
+ * whether creating, polling, listing, or resuming a run.
  * <p>
  * Created by Edgar Muhamyangabo on 8/17/26
  * Author : Edgar Muhamyangabo
