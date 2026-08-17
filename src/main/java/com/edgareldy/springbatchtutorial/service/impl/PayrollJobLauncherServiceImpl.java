@@ -15,11 +15,13 @@ import org.springframework.stereotype.Service;
 
 /**
  * Default {@link PayrollJobLauncherService} implementation, launching
- * {@code monthlyPayrollJob} through Spring Batch's {@link JobOperator}
- * (the {@code JobLauncher} successor as of Spring Batch 6). Each call
- * builds {@code JobParameters} from the {@link PayrollRun}'s own id
- * (already unique per row) and its period, so no two runs ever collide in
- * the {@code JobRepository}.
+ * {@code monthlyPayrollJob} and {@code payrollFinalizeJob} through Spring
+ * Batch's {@link JobOperator} (the {@code JobLauncher} successor as of
+ * Spring Batch 6). Each call builds {@code JobParameters} from the
+ * {@link PayrollRun}'s own id (already unique per row) and its period; the
+ * two {@code Job} beans are distinctly named, so a {@code payrollRunId}/
+ * {@code period} pair used to launch both never collides in the
+ * {@code JobRepository} even though the parameter values are identical.
  * <p>
  * Created by Edgar Muhamyangabo on 8/17/26
  * Author : Edgar Muhamyangabo
@@ -31,25 +33,42 @@ public class PayrollJobLauncherServiceImpl implements PayrollJobLauncherService 
 
     private final JobOperator jobOperator;
     private final Job monthlyPayrollJob;
+    private final Job payrollFinalizeJob;
 
-    public PayrollJobLauncherServiceImpl(JobOperator jobOperator, Job monthlyPayrollJob) {
+    public PayrollJobLauncherServiceImpl(
+            JobOperator jobOperator, Job monthlyPayrollJob, Job payrollFinalizeJob) {
         this.jobOperator = jobOperator;
         this.monthlyPayrollJob = monthlyPayrollJob;
+        this.payrollFinalizeJob = payrollFinalizeJob;
     }
 
     @Override
     public JobExecution launchMonthlyPayrollJob(PayrollRun payrollRun) {
-        JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("payrollRunId", payrollRun.getId())
-                .addString("period", toPeriod(payrollRun))
-                .toJobParameters();
         try {
-            return jobOperator.start(monthlyPayrollJob, jobParameters);
+            return jobOperator.start(monthlyPayrollJob, toJobParameters(payrollRun));
         } catch (JobExecutionAlreadyRunningException | JobRestartException
                  | JobInstanceAlreadyCompleteException | InvalidJobParametersException ex) {
             throw new IllegalStateException(
                     "Unable to launch monthlyPayrollJob for payrollRunId=" + payrollRun.getId(), ex);
         }
+    }
+
+    @Override
+    public JobExecution launchPayrollFinalizeJob(PayrollRun payrollRun) {
+        try {
+            return jobOperator.start(payrollFinalizeJob, toJobParameters(payrollRun));
+        } catch (JobExecutionAlreadyRunningException | JobRestartException
+                 | JobInstanceAlreadyCompleteException | InvalidJobParametersException ex) {
+            throw new IllegalStateException(
+                    "Unable to launch payrollFinalizeJob for payrollRunId=" + payrollRun.getId(), ex);
+        }
+    }
+
+    private JobParameters toJobParameters(PayrollRun payrollRun) {
+        return new JobParametersBuilder()
+                .addLong("payrollRunId", payrollRun.getId())
+                .addString("period", toPeriod(payrollRun))
+                .toJobParameters();
     }
 
     private String toPeriod(PayrollRun payrollRun) {
