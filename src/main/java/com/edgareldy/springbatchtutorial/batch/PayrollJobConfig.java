@@ -6,6 +6,7 @@ import com.edgareldy.springbatchtutorial.batch.calculationstep.EmployeeHoursItem
 import com.edgareldy.springbatchtutorial.batch.calculationstep.PayslipItemProcessor;
 import com.edgareldy.springbatchtutorial.batch.calculationstep.PayslipItemWriter;
 import com.edgareldy.springbatchtutorial.batch.decision.AnomalyReviewDecider;
+import com.edgareldy.springbatchtutorial.batch.exportstep.ExportPayrollSummaryTasklet;
 import com.edgareldy.springbatchtutorial.batch.importstep.ImportStepExecutionListener;
 import com.edgareldy.springbatchtutorial.batch.importstep.TimesheetItemProcessor;
 import com.edgareldy.springbatchtutorial.batch.importstep.TimesheetItemWriter;
@@ -34,12 +35,13 @@ import org.springframework.transaction.PlatformTransactionManager;
  * followed by the {@code Tasklet} {@code aggregateHoursPerEmployee} (single
  * grouped hour aggregation with anomaly detection), followed by
  * {@code anomalyReviewDecider} (a {@code JobExecutionDecider} routing to
- * either the {@code flagForReview} {@code Tasklet} step or straight on to
- * the chunk-oriented {@code calculatePayslips}). Also assembles
- * {@code payrollFinalizeJob}, a second, distinctly named {@code Job} that
- * reuses the same {@code calculatePayslips} {@code Step} bean to resume a
- * run once a human has cleared its anomaly out-of-band. A later branch adds
- * {@code exportPayrollSummary} to both.
+ * either the {@code flagForReview} {@code Tasklet} step or on to the
+ * chunk-oriented {@code calculatePayslips} and, finally, the {@code Tasklet}
+ * {@code exportPayrollSummary}, which also marks the run {@code COMPLETED}).
+ * Also assembles {@code payrollFinalizeJob}, a second, distinctly named
+ * {@code Job} that reuses the same {@code calculatePayslips} and
+ * {@code exportPayrollSummary} {@code Step} beans to resume a run once a
+ * human has cleared its anomaly out-of-band.
  * <p>
  * Created by Edgar Muhamyangabo on 8/17/26
  * Author : Edgar Muhamyangabo
@@ -119,6 +121,16 @@ public class PayrollJobConfig {
                 .build();
     }
 
+    @Bean
+    public Step exportPayrollSummary(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager,
+            ExportPayrollSummaryTasklet exportPayrollSummaryTasklet) {
+        return new StepBuilder("exportPayrollSummary", jobRepository)
+                .tasklet(exportPayrollSummaryTasklet, transactionManager)
+                .build();
+    }
+
     /**
      * {@code @Primary} because two {@code Job} beans now exist in this
      * context: anything that resolves a {@code Job} by type alone via an
@@ -139,7 +151,8 @@ public class PayrollJobConfig {
             Step aggregateHoursPerEmployee,
             AnomalyReviewDecider anomalyReviewDecider,
             Step flagForReview,
-            Step calculatePayslips) {
+            Step calculatePayslips,
+            Step exportPayrollSummary) {
         return new JobBuilder("monthlyPayrollJob", jobRepository)
                 .start(importTimesheets)
                 .next(aggregateHoursPerEmployee)
@@ -147,6 +160,7 @@ public class PayrollJobConfig {
                     .on(AnomalyReviewDecider.REVIEW_REQUIRED.getName()).to(flagForReview)
                 .from(anomalyReviewDecider)
                     .on(AnomalyReviewDecider.PROCEED.getName()).to(calculatePayslips)
+                .next(exportPayrollSummary)
                 .end()
                 .build();
     }
@@ -154,9 +168,10 @@ public class PayrollJobConfig {
     /**
      * Resumes a {@code PayrollRun} that a human has cleared out of
      * {@code AWAITING_REVIEW}: reuses the exact same {@code calculatePayslips}
-     * {@code Step} bean {@code monthlyPayrollJob} uses (not a redefinition),
-     * so the calculation logic is defined once. A distinct {@code Job} name
-     * means a resume launch never collides with the original run's
+     * and {@code exportPayrollSummary} {@code Step} beans
+     * {@code monthlyPayrollJob} uses (not a redefinition), so both the
+     * calculation and export logic are defined once. A distinct {@code Job}
+     * name means a resume launch never collides with the original run's
      * {@code monthlyPayrollJob} instance in the {@code JobRepository}, even
      * when both share the same {@code payrollRunId}/{@code period}
      * {@code JobParameters} values.
@@ -164,9 +179,11 @@ public class PayrollJobConfig {
     @Bean
     public Job payrollFinalizeJob(
             JobRepository jobRepository,
-            Step calculatePayslips) {
+            Step calculatePayslips,
+            Step exportPayrollSummary) {
         return new JobBuilder("payrollFinalizeJob", jobRepository)
                 .start(calculatePayslips)
+                .next(exportPayrollSummary)
                 .build();
     }
 }
