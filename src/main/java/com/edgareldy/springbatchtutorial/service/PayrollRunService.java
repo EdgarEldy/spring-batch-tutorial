@@ -1,10 +1,12 @@
 package com.edgareldy.springbatchtutorial.service;
 
 import com.edgareldy.springbatchtutorial.entity.PayrollRun;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
- * Contract for creating, looking up, and resuming {@link PayrollRun} rows,
- * the business-level counterpart of a {@code monthlyPayrollJob}/
+ * Contract for creating, looking up, listing, and resuming {@link PayrollRun}
+ * rows, the business-level counterpart of a {@code monthlyPayrollJob}/
  * {@code payrollFinalizeJob} execution. Implemented by
  * {@code PayrollRunServiceImpl}.
  * <p>
@@ -26,6 +28,12 @@ public interface PayrollRunService {
      * {@code ResourceNotFoundException} if none exists.
      */
     PayrollRun getRun(Long id);
+
+    /**
+     * Paginated run history, so an admin can see past/in-progress runs
+     * without querying {@code BATCH_JOB_EXECUTION} directly.
+     */
+    Page<PayrollRun> listRuns(Pageable pageable);
 
     /**
      * Validates that the {@link PayrollRun} identified by {@code id} is
