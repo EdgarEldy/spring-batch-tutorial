@@ -7,6 +7,11 @@ import java.util.List;
  * Structured error detail placed in the {@code data} field of an
  * {@code ApiResponse<ErrorResponse>} whenever {@link GlobalExceptionHandler}
  * handles an exception, so clients get more than just a plain message string.
+ * <p>
+ * Created by Edgar Muhamyangabo on 8/15/26
+ * Author : Edgar Muhamyangabo
+ * Date : 8/15/26
+ * Project : spring-batch-tutorial
  */
 public record ErrorResponse(
         Instant timestamp,
@@ -21,6 +26,11 @@ public record ErrorResponse(
      * A single field validation failure, used when Bean Validation rejects a
      * request body (see {@link GlobalExceptionHandler} handling of
      * {@code MethodArgumentNotValidException}).
+     * <p>
+     * Created by Edgar Muhamyangabo on 8/15/26
+     * Author : Edgar Muhamyangabo
+     * Date : 8/15/26
+     * Project : spring-batch-tutorial
      */
     public record FieldError(String field, String message) {
     }
