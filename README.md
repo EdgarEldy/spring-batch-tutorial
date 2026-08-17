@@ -393,18 +393,18 @@ Chunk-oriented step. First step of `monthlyPayrollJob`, runnable standalone for 
 
 ### Tasks
 
-- [ ] `TimesheetEntry`, `PayrollRun`, `PayrollRunStatus`, `RejectedTimesheetEntry` entities and repositories
-- [ ] `PayrollJobConfig`: defines `monthlyPayrollJob` with its first `Step`, `importTimesheets` (chunk size configurable, e.g. 100)
-- [ ] `TimesheetCsvItemReader` (`FlatFileItemReader<TimesheetCsvRow>`)
-- [ ] `TimesheetItemProcessor` (`ItemProcessor<TimesheetCsvRow, TimesheetEntry>`): validates `hours_worked` (> 0, ≤ 24), resolves `employee_id` from the CSV's email column via `EmployeeRepository`, throws a dedicated exception for an unknown employee to trigger a skip
-- [ ] `TimesheetItemWriter` (`ItemWriter<TimesheetEntry>`)
-- [ ] `TimesheetSkipListener` (`SkipListener<TimesheetCsvRow, TimesheetEntry>`): persists each rejected row into `rejected_timesheet_entries`, linked to the current `PayrollRun`
-- [ ] `.faultTolerant().skipLimit(...).skip(InvalidTimesheetRowException.class)` on the step
-- [ ] `ImportStepExecutionListener`: logs a read/written/skipped summary at step completion
-- [ ] `PayrollController`/`PayrollJobLauncherService`: creates a `PayrollRun` row (`status = STARTED`), then launches `monthlyPayrollJob` with `payrollRunId` + `period` as unique `JobParameters`
-- [ ] Unit tests: `TimesheetItemProcessor`'s validation rules as pure logic (mocked `EmployeeRepository`)
-- [ ] Integration tests (Testcontainers): `JobLauncherTestUtils.launchStep("importTimesheets", ...)` against the sample CSV - valid rows persisted, invalid rows land in `rejected_timesheet_entries` with the right reason
-- [ ] E2E test: launching `monthlyPayrollJob` with only this step wired stops cleanly after `importTimesheets` (later branches extend the flow)
+- [x] `TimesheetEntry`, `PayrollRun`, `PayrollRunStatus`, `RejectedTimesheetEntry` entities and repositories (plus `Employee`/`EmployeeRepository`, required by `TimesheetItemProcessor`)
+- [x] `PayrollJobConfig`: defines `monthlyPayrollJob` with its first `Step`, `importTimesheets` (chunk size configurable, e.g. 100)
+- [x] `TimesheetCsvItemReaderConfig` (`FlatFileItemReader<TimesheetCsvRow>`)
+- [x] `TimesheetItemProcessor` (`ItemProcessor<TimesheetCsvRow, TimesheetEntry>`): validates `hours_worked` (> 0, ≤ 24), resolves `employee_id` from the CSV's email column via `EmployeeRepository`, throws a dedicated exception for an unknown employee to trigger a skip
+- [x] `TimesheetItemWriter` (`ItemWriter<TimesheetEntry>`)
+- [x] `TimesheetSkipListener` (`SkipListener<TimesheetCsvRow, TimesheetEntry>`): persists each rejected row into `rejected_timesheet_entries`, linked to the current `PayrollRun`
+- [x] `.faultTolerant().skipLimit(...).skip(InvalidTimesheetRowException.class)` on the step
+- [x] `ImportStepExecutionListener`: logs a read/written/skipped summary at step completion
+- [x] `PayrollController`/`PayrollJobLauncherService`: creates a `PayrollRun` row (`status = STARTED`), then launches `monthlyPayrollJob` with `payrollRunId` + `period` as unique `JobParameters`
+- [x] Unit tests: `TimesheetItemProcessor`'s validation rules as pure logic (mocked `EmployeeRepository`)
+- [x] Integration tests (Testcontainers): `JobLauncherTestUtils.launchStep("importTimesheets", ...)` against the sample CSV - valid rows persisted, invalid rows land in `rejected_timesheet_entries` with the right reason
+- [x] E2E test: launching `monthlyPayrollJob` with only this step wired stops cleanly after `importTimesheets` (later branches extend the flow)
 
 ## feature/payroll-calculation
 
