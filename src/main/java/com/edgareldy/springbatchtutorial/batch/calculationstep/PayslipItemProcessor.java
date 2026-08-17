@@ -85,7 +85,7 @@ public class PayslipItemProcessor implements ItemProcessor<EmployeeHoursAggregat
      * are paid at {@code hourlyRate}, any hours beyond it are paid at
      * {@code hourlyRate * overtimeMultiplier}.
      */
-    static BigDecimal computeGrossPay(
+    public static BigDecimal computeGrossPay(
             BigDecimal totalHours,
             BigDecimal hourlyRate,
             BigDecimal overtimeThresholdHours,
@@ -101,12 +101,12 @@ public class PayslipItemProcessor implements ItemProcessor<EmployeeHoursAggregat
     }
 
     /** Pure deductions computation: a flat percentage of gross pay. */
-    static BigDecimal computeDeductions(BigDecimal grossPay, BigDecimal deductionRate) {
+    public static BigDecimal computeDeductions(BigDecimal grossPay, BigDecimal deductionRate) {
         return grossPay.multiply(deductionRate).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
     }
 
     /** Pure net pay computation: gross pay minus deductions. */
-    static BigDecimal computeNetPay(BigDecimal grossPay, BigDecimal deductions) {
+    public static BigDecimal computeNetPay(BigDecimal grossPay, BigDecimal deductions) {
         return grossPay.subtract(deductions).setScale(MONEY_SCALE, RoundingMode.HALF_UP);
     }
 }
