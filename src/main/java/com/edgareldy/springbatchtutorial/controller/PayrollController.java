@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Exposes the payroll run lifecycle: creating a run and launching
- * {@code monthlyPayrollJob}, and looking up a run's current business
- * status. {@code POST /api/v1/payroll/runs} returns
- * {@code ApiResponse<PayrollRunResponse>} rather than
- * {@code ApiResponse<JobLaunchResponse>}: the endpoint's primary resource
- * is the {@code PayrollRun} it creates (REST POST-creates-a-resource
- * semantics), and the caller needs the run's {@code id} to poll
+ * {@code monthlyPayrollJob}, looking up a run's current business status,
+ * and resuming a run that was flagged {@code AWAITING_REVIEW} by launching
+ * {@code payrollFinalizeJob} once a human has reviewed it out-of-band.
+ * {@code POST /api/v1/payroll/runs} and {@code POST /api/v1/payroll/runs/{id}/resume}
+ * both return {@code ApiResponse<PayrollRunResponse>} rather than
+ * {@code ApiResponse<JobLaunchResponse>}: the endpoints' primary resource
+ * is the {@code PayrollRun} they act on (REST POST-creates/updates-a-resource
+ * semantics), and the caller needs the run's business state to poll
  * {@code GET /api/v1/payroll/runs/{id}} afterward - a bare
  * {@code JobExecution} id/status wouldn't give it that.
  * <p>
@@ -59,6 +61,14 @@ public class PayrollController {
     public ResponseEntity<ApiResponse<PayrollRunResponse>> getRun(@PathVariable Long id) {
         PayrollRun payrollRun = payrollRunService.getRun(id);
         return ResponseEntity.ok(ApiResponse.success(toResponse(payrollRun), "Payroll run retrieved"));
+    }
+
+    @PostMapping("/{id}/resume")
+    public ResponseEntity<ApiResponse<PayrollRunResponse>> resumeRun(@PathVariable Long id) {
+        PayrollRun payrollRun = payrollRunService.resumeRun(id);
+        payrollJobLauncherService.launchPayrollFinalizeJob(payrollRun);
+        return ResponseEntity.ok(
+                ApiResponse.success(toResponse(payrollRun), "Payroll run resumed and payrollFinalizeJob launched"));
     }
 
     private PayrollRunResponse toResponse(PayrollRun payrollRun) {
