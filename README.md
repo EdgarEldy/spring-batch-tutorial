@@ -412,15 +412,15 @@ Adds two steps to `monthlyPayrollJob`, chained after `importTimesheets`: one Tas
 
 ### Tasks
 
-- [ ] `AggregateHoursTasklet` (Tasklet): a single grouped SQL query (`SUM(hours_worked) GROUP BY employee_id`) over the current run's `timesheet_entries`, exposed as a repository method (`TimesheetEntryRepository.aggregateHoursByEmployee(payrollRunId)`) reused by both this tasklet and `EmployeeHoursItemReader` below
-- [ ] Anomaly detection inside `AggregateHoursTasklet`: any employee whose aggregated hours exceed a configurable threshold (e.g. 300h/month) sets a boolean `hasAnomalies` flag (and the offending count) in the `StepExecution`'s `ExecutionContext` - the *only* thing this tasklet writes there, since `ExecutionContext` is meant for small metadata, not for carrying bulk aggregated rows between steps
-- [ ] `EmployeeHoursItemReader` (`JpaPagingItemReader`, or a custom `ItemReader` wrapping the same grouped repository query as the tasklet above): re-runs the aggregation as a paginated read, one page per chunk, rather than trying to pass the full result set through the `ExecutionContext` - the tasklet and this reader both call the same repository method, so the aggregation logic itself is defined once
-- [ ] `PayslipItemProcessor` (`ItemProcessor<EmployeeHoursAggregate, Payslip>`): computes `gross_pay = total_hours * hourly_rate` with a 1.5× multiplier on hours beyond 160/month, `deductions` as a flat percentage, `net_pay = gross_pay - deductions`, as a pure, independently testable calculation method
-- [ ] `PayslipItemWriter` (`ItemWriter<Payslip>`)
-- [ ] `PayrollJobConfig` updated: `importTimesheets` → `aggregateHoursPerEmployee` → `calculatePayslips`, in that order
-- [ ] Unit tests: gross/net pay computation as a pure function, including the overtime multiplier boundary (exactly 160h, 160.01h)
-- [ ] Integration tests (Testcontainers): `aggregateHoursPerEmployee` produces correct per-employee totals against real timesheet data; `calculatePayslips` persists the expected `Payslip` rows
-- [ ] E2E test: running the three chained steps against the sample CSV produces the expected payslips for every valid employee
+- [x] `AggregateHoursTasklet` (Tasklet): a single grouped SQL query (`SUM(hours_worked) GROUP BY employee_id`) over the current run's `timesheet_entries`, exposed as a repository method (`TimesheetEntryRepository.aggregateHoursByEmployee(payrollRunId)`) reused by both this tasklet and `EmployeeHoursItemReader` below
+- [x] Anomaly detection inside `AggregateHoursTasklet`: any employee whose aggregated hours exceed a configurable threshold (e.g. 300h/month) sets a boolean `hasAnomalies` flag (and the offending count) in the `StepExecution`'s `ExecutionContext` - the *only* thing this tasklet writes there, since `ExecutionContext` is meant for small metadata, not for carrying bulk aggregated rows between steps
+- [x] `EmployeeHoursItemReader` (`JpaPagingItemReader`, or a custom `ItemReader` wrapping the same grouped repository query as the tasklet above): re-runs the aggregation as a paginated read, one page per chunk, rather than trying to pass the full result set through the `ExecutionContext` - the tasklet and this reader both call the same repository method, so the aggregation logic itself is defined once
+- [x] `PayslipItemProcessor` (`ItemProcessor<EmployeeHoursAggregate, Payslip>`): computes `gross_pay = total_hours * hourly_rate` with a 1.5× multiplier on hours beyond 160/month, `deductions` as a flat percentage, `net_pay = gross_pay - deductions`, as a pure, independently testable calculation method
+- [x] `PayslipItemWriter` (`ItemWriter<Payslip>`)
+- [x] `PayrollJobConfig` updated: `importTimesheets` → `aggregateHoursPerEmployee` → `calculatePayslips`, in that order
+- [x] Unit tests: gross/net pay computation as a pure function, including the overtime multiplier boundary (exactly 160h, 160.01h)
+- [x] Integration tests (Testcontainers): `aggregateHoursPerEmployee` produces correct per-employee totals against real timesheet data; `calculatePayslips` persists the expected `Payslip` rows
+- [x] E2E test: running the three chained steps against the sample CSV produces the expected payslips for every valid employee
 
 ## feature/conditional-flow
 
