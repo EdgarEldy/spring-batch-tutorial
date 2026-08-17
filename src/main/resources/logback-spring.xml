@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Extends Spring Boot's own default appenders instead of redefining them from
+  scratch, then adds a prod-only file appender. The console appender already
+  honors logging.structured.format.console (set to "ecs" in
+  application-prod.yml), so no JSON encoder needs to be hand-written here.
+-->
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProfile name="prod">
+        <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
