@@ -469,10 +469,10 @@ Demonstrates scaling `calculatePayslips` to a large employee count.
 
 ### Tasks
 
-- [ ] `EmployeePartitioner` (`Partitioner`): splits employees into N partitions (by id range)
-- [ ] Reconfigure `calculatePayslips` as a master/worker `Step` (`partitionStep`), with a dedicated `TaskExecutor` (`ThreadPoolTaskExecutor`) running partitions in parallel
-- [ ] Execution time comparison (before/after partitioning), documented in the branch's README, against a large generated employee/timesheet dataset (e.g. 10,000 employees)
-- [ ] Documented note on concurrent database write safety (per-partition transactions, no conflicting writes on the same `Payslip` rows)
+- [x] `EmployeePartitioner` (`Partitioner`): splits employees into N partitions (by id range)
+- [x] Reconfigure `calculatePayslips` as a master/worker `Step` (`partitionStep`), with a dedicated `TaskExecutor` (`ThreadPoolTaskExecutor`) running partitions in parallel
+- [x] Execution time comparison (before/after partitioning), documented in the branch's README, against a large generated employee/timesheet dataset (e.g. 10,000 employees)
+- [x] Documented note on concurrent database write safety (per-partition transactions, no conflicting writes on the same `Payslip` rows)
 
 ### Execution time comparison
 
