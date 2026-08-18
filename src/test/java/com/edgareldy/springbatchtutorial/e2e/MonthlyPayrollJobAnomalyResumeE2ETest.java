@@ -147,9 +147,21 @@ class MonthlyPayrollJobAnomalyResumeE2ETest {
         JobExecution finalizeExecution = payrollJobLauncherService.launchPayrollFinalizeJob(resumedRun);
 
         assertThat(finalizeExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
+        // calculatePayslips is now a partitioned master/worker Step: besides
+        // the master itself and exportPayrollSummary, one
+        // calculatePayslipsWorker:partitionN StepExecution per non-empty
+        // EmployeePartitioner range also shows up here (workers run
+        // concurrently, so their relative order among themselves is not
+        // guaranteed - only that both non-worker steps ran, in order, and
+        // that at least one worker partition executed).
+        List<String> nonWorkerStepNames = finalizeExecution.getStepExecutions().stream()
+                .map(StepExecution::getStepName)
+                .filter(name -> !name.startsWith("calculatePayslipsWorker:partition"))
+                .toList();
+        assertThat(nonWorkerStepNames).containsExactly("calculatePayslips", "exportPayrollSummary");
         assertThat(finalizeExecution.getStepExecutions())
-                .extracting(StepExecution::getStepName)
-                .containsExactly("calculatePayslips", "exportPayrollSummary");
+                .filteredOn(stepExecution -> stepExecution.getStepName().startsWith("calculatePayslipsWorker:partition"))
+                .isNotEmpty();
         assertThat(finalizeExecution.getStepExecutions())
                 .extracting(StepExecution::getStatus)
                 .containsOnly(BatchStatus.COMPLETED);
