@@ -119,9 +119,21 @@ class MonthlyPayrollJobProceedPathIntegrationTest {
         JobExecution execution = jobLauncherTestUtils.launchJob(jobParametersFor(payrollRun));
 
         assertThat(execution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
-        assertThat(execution.getStepExecutions())
-                .extracting(StepExecution::getStepName)
+        // calculatePayslips is now a partitioned master/worker Step: besides
+        // the master itself, one calculatePayslipsWorker:partitionN
+        // StepExecution per non-empty EmployeePartitioner range also shows
+        // up here (workers run concurrently, so their relative order among
+        // themselves is not guaranteed - only that every non-worker step ran,
+        // in order, and that at least one worker partition executed).
+        List<String> nonWorkerStepNames = execution.getStepExecutions().stream()
+                .map(StepExecution::getStepName)
+                .filter(name -> !name.startsWith("calculatePayslipsWorker:partition"))
+                .toList();
+        assertThat(nonWorkerStepNames)
                 .containsExactly("importTimesheets", "aggregateHoursPerEmployee", "calculatePayslips", "exportPayrollSummary");
+        assertThat(execution.getStepExecutions())
+                .filteredOn(stepExecution -> stepExecution.getStepName().startsWith("calculatePayslipsWorker:partition"))
+                .isNotEmpty();
         assertThat(execution.getStepExecutions())
                 .extracting(StepExecution::getStatus)
                 .containsOnly(BatchStatus.COMPLETED);
