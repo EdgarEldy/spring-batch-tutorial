@@ -29,6 +29,13 @@ import org.springframework.data.repository.query.Param;
  * read back one item at a time), so the aggregation logic itself is defined
  * exactly once.
  * <p>
+ * {@link #aggregateHoursByEmployeeInRange} adds an {@code employee.id
+ * between :minId and :maxId} filter on top of the same query, used by
+ * {@code EmployeeHoursItemReader} once {@code calculatePayslips} is
+ * partitioned: each worker partition only aggregates the id range assigned
+ * to it by {@code EmployeePartitioner}, so partitions never overlap on the
+ * same employee.
+ * <p>
  * Created by Edgar Muhamyangabo on 8/17/26
  * Author : Edgar Muhamyangabo
  * Date : 8/17/26
@@ -49,4 +56,22 @@ public interface TimesheetEntryRepository extends JpaRepository<TimesheetEntry, 
             order by te.employee.id
             """)
     List<EmployeeHoursAggregate> aggregateHoursByEmployee(@Param("payrollRunId") Long payrollRunId);
+
+    @Query("""
+            select new com.edgareldy.springbatchtutorial.dto.csv.EmployeeHoursAggregate(
+                te.employee.id,
+                te.employee.hourlyRate,
+                sum(te.hoursWorked))
+            from PayrollRun pr, TimesheetEntry te
+            where pr.id = :payrollRunId
+              and te.employee.id between :minId and :maxId
+              and extract(year from te.workDate) = pr.periodYear
+              and extract(month from te.workDate) = pr.periodMonth
+            group by te.employee.id, te.employee.hourlyRate
+            order by te.employee.id
+            """)
+    List<EmployeeHoursAggregate> aggregateHoursByEmployeeInRange(
+            @Param("payrollRunId") Long payrollRunId,
+            @Param("minId") Long minId,
+            @Param("maxId") Long maxId);
 }
