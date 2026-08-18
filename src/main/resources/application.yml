@@ -20,3 +20,7 @@ payroll:
     overtime-threshold-hours: 160
     overtime-multiplier: 1.5
     deduction-rate: 0.15
+  export:
+    output-dir: exports
+  scheduling:
+    cron: "0 0 3 1 * *"
