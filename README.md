@@ -469,10 +469,72 @@ Demonstrates scaling `calculatePayslips` to a large employee count.
 
 ### Tasks
 
-- [ ] `EmployeePartitioner` (`Partitioner`): splits employees into N partitions (by id range)
-- [ ] Reconfigure `calculatePayslips` as a master/worker `Step` (`partitionStep`), with a dedicated `TaskExecutor` (`ThreadPoolTaskExecutor`) running partitions in parallel
-- [ ] Execution time comparison (before/after partitioning), documented in the branch's README, against a large generated employee/timesheet dataset (e.g. 10,000 employees)
-- [ ] Documented note on concurrent database write safety (per-partition transactions, no conflicting writes on the same `Payslip` rows)
+- [x] `EmployeePartitioner` (`Partitioner`): splits employees into N partitions (by id range)
+- [x] Reconfigure `calculatePayslips` as a master/worker `Step` (`partitionStep`), with a dedicated `TaskExecutor` (`ThreadPoolTaskExecutor`) running partitions in parallel
+- [x] Execution time comparison (before/after partitioning), documented in the branch's README, against a large generated employee/timesheet dataset (e.g. 10,000 employees)
+- [x] Documented note on concurrent database write safety (per-partition transactions, no conflicting writes on the same `Payslip` rows)
+
+### Execution time comparison
+
+Measured with `CalculatePayslipsPartitioningBenchmark`
+(`src/test/java/com/edgareldy/springbatchtutorial/integration/CalculatePayslipsPartitioningBenchmark.java`),
+a one-off benchmark class deliberately named so Maven Surefire's default
+`Test*`/`*Test`/`*Tests`/`*TestCase` include patterns never pick it up: it
+never runs as part of `mvn verify` or CI, only on demand with
+`mvn test -Dtest=CalculatePayslipsPartitioningBenchmark`, since wall-clock
+timing assertions would be flaky on a shared CI runner. It generates 10,000
+`Employee` rows and 40,000 `TimesheetEntry` rows (4 each, all below the
+overtime threshold so the comparison measures partitioning, not overtime
+math), then runs `calculatePayslips` twice against that same dataset: once
+with `gridSize(1)` on a `SyncTaskExecutor` (single partition, running on the
+calling thread, the honest sequential-equivalent baseline, since the actual
+pre-partitioning `calculatePayslips` `Step` no longer exists to benchmark
+directly), and once with `gridSize(8)` on a dedicated 8-thread
+`ThreadPoolTaskExecutor`. Elapsed time is read from the real
+`StepExecution.getStartTime()`/`getEndTime()` across every partition the run
+produced (not a coarse wrapper around the launch call).
+
+| Variant | `StepExecution` elapsed | Payslips written |
+|---|---|---|
+| Sequential (`gridSize=1`) | 25,088 ms (~25.1 s) | 10,000 |
+| Parallel (`gridSize=8`) | 8,651 ms (~8.65 s) | 10,000 |
+| **Speedup** | **2.90x** | |
+
+The parallel run's logs confirm a genuine 8-way fan-out (all 8
+`calculatePayslipsWorker:partitionN` executions completed within ~200ms of
+each other, each on a disjoint, near-evenly-sized employee id range from
+`EmployeePartitioner`), not one worker doing all the work while the rest sat
+idle. The speedup is real but well short of 8x, which is the expected shape
+for this kind of workload rather than a red flag: `spring.datasource.hikari.*`
+is never overridden in this project, so the connection pool defaults to a
+maximum of 10 connections, shared by all 8 worker threads plus the
+`JobRepository`'s own step-bookkeeping writes (`BATCH_STEP_EXECUTION`
+updates on every chunk commit) - a pool sized barely above the worker count
+is a plausible ceiling on how close to linear the scaling can get. Bumping
+`maximum-pool-size` well above 8 and re-running the benchmark is a natural
+follow-up experiment for a reader who wants to push the comparison further,
+deliberately left as an exercise rather than folded into this branch's
+default configuration.
+
+### Concurrent database write safety
+
+`EmployeePartitioner` splits the `employees` id space into contiguous,
+non-overlapping ranges (see its own Javadoc for the exact boundary math), so
+by construction no two worker partitions ever process the same employee: two
+threads can never compute or write a `Payslip` for the same `employee_id` at
+the same time, so there is no read-modify-write race on the same row to
+guard against, no need for pessimistic/optimistic locking, and no risk of one
+partition's commit overwriting another's. Each `calculatePayslipsWorker`
+partition also runs its own chunk-scoped transaction via the shared
+`PlatformTransactionManager` (the same transaction manager every other
+chunk-oriented step in this project already uses), so a failure in one
+partition rolls back only that partition's own uncommitted chunk, never
+another partition's already-committed work. The only shared, genuinely
+concurrent resource across partitions is the database connection pool
+itself (see the execution time comparison above), a throughput/latency
+concern, not a correctness one: HikariCP hands out and returns connections
+safely under concurrent use, so contention there can only slow partitions
+down, never corrupt data.
 
 ## Order of work
 
