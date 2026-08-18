@@ -14,11 +14,15 @@ import com.edgareldy.springbatchtutorial.repository.PayslipRepository;
 import com.edgareldy.springbatchtutorial.repository.TimesheetEntryRepository;
 import com.edgareldy.springbatchtutorial.service.PayrollJobLauncherService;
 import com.edgareldy.springbatchtutorial.service.PayrollRunService;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
@@ -31,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Runs the full anomaly path end to end against a real PostgreSQL instance
@@ -42,9 +47,11 @@ import org.springframework.test.context.ActiveProfiles;
  * the exact same two production calls {@code PayrollController#resumeRun}
  * makes, rather than reaching for {@code JobOperator}/{@code JobLauncher}
  * directly. Confirms {@code payrollFinalizeJob} then runs
- * {@code calculatePayslips} on its own and produces the payslips
- * {@code monthlyPayrollJob} never got to write, for every one of the sample
- * CSV's five valid employees.
+ * {@code calculatePayslips}, producing the payslips {@code monthlyPayrollJob}
+ * never got to write for every one of the sample CSV's five valid employees,
+ * followed by {@code exportPayrollSummary} - chained onto
+ * {@code calculatePayslips} since {@code feature/export-and-scheduling} -
+ * writing the resulting summary CSV to disk.
  * <p>
  * {@code MonthlyPayrollJobE2ETest} stops at asserting the
  * {@code AWAITING_REVIEW} outcome of the first half of this same scenario;
@@ -72,6 +79,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Import(PostgresTestcontainerConfiguration.class)
 @SpringBatchTest
 @SpringBootTest
+@TestPropertySource(properties = "payroll.export.output-dir=target/test-output/monthly-payroll-job-anomaly-resume-e2e")
 class MonthlyPayrollJobAnomalyResumeE2ETest {
 
     private static final List<String> VALID_EMPLOYEE_EMAILS = List.of(
@@ -84,6 +92,8 @@ class MonthlyPayrollJobAnomalyResumeE2ETest {
     private static final BigDecimal OVERTIME_THRESHOLD_HOURS = new BigDecimal("160");
     private static final BigDecimal OVERTIME_MULTIPLIER = new BigDecimal("1.5");
     private static final BigDecimal DEDUCTION_RATE = new BigDecimal("0.15");
+    private static final String PERIOD = "2026-08";
+    private static final Path OUTPUT_DIR = Path.of("target", "test-output", "monthly-payroll-job-anomaly-resume-e2e");
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -106,6 +116,11 @@ class MonthlyPayrollJobAnomalyResumeE2ETest {
     @Autowired
     private PayrollJobLauncherService payrollJobLauncherService;
 
+    @AfterEach
+    void deleteGeneratedFile() throws IOException {
+        Files.deleteIfExists(OUTPUT_DIR.resolve("payroll-summary-" + PERIOD + ".csv"));
+    }
+
     @Test
     void fullAnomalyPath_importAggregateFlagResumeCalculatePayslips() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
@@ -123,8 +138,9 @@ class MonthlyPayrollJobAnomalyResumeE2ETest {
 
         // A human has reviewed David Chen's flagged hours out-of-band and
         // decided to proceed; resumeRun moves the run back to STARTED and
-        // payrollFinalizeJob picks up right where monthlyPayrollJob left
-        // off, reusing the calculatePayslips step bean as-is.
+        // payrollFinalizeJob picks up right where monthlyPayrollJob left off,
+        // reusing the calculatePayslips step bean as-is, then chains straight
+        // into exportPayrollSummary.
         PayrollRun resumedRun = payrollRunService.resumeRun(payrollRun.getId());
         assertThat(resumedRun.getStatus()).isEqualTo(PayrollRunStatus.STARTED);
 
@@ -133,10 +149,13 @@ class MonthlyPayrollJobAnomalyResumeE2ETest {
         assertThat(finalizeExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
         assertThat(finalizeExecution.getStepExecutions())
                 .extracting(StepExecution::getStepName)
-                .containsExactly("calculatePayslips");
+                .containsExactly("calculatePayslips", "exportPayrollSummary");
         assertThat(finalizeExecution.getStepExecutions())
                 .extracting(StepExecution::getStatus)
                 .containsOnly(BatchStatus.COMPLETED);
+
+        Path summaryFile = OUTPUT_DIR.resolve("payroll-summary-" + PERIOD + ".csv");
+        assertThat(summaryFile).exists();
 
         List<Payslip> payslips = payslipsFor(payrollRun);
         assertThat(payslips).hasSize(VALID_EMPLOYEE_EMAILS.size());
