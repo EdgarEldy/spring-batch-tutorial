@@ -20,6 +20,9 @@ payroll:
     overtime-threshold-hours: 160
     overtime-multiplier: 1.5
     deduction-rate: 0.15
+    partition:
+      grid-size: 4
+      pool-size: 4
   export:
     output-dir: exports
   scheduling:
