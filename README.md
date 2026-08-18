@@ -292,7 +292,7 @@ public record ApiResponse<T>(
 
 - List endpoints wrap their content in `ApiResponse<PageResponse<T>>` (`PageResponse` carries `content`, `page`, `size`, `totalElements`, `totalPages`).
 - For job-triggering endpoints, `data` holds a `JobLaunchResponse` (execution id, initial status) or a `PayrollRunResponse` (business-level `PayrollRun` state).
-- `GlobalExceptionHandler` (`@RestControllerAdvice`) always returns an `ApiResponse<Void>` with `success = false` for `ResourceNotFoundException` (404), validation errors (400), `BusinessRuleException` (422), and any other exception (500).
+- `GlobalExceptionHandler` (`@RestControllerAdvice`) always returns an `ApiResponse<ErrorResponse>` with `success = false` for `ResourceNotFoundException` (404), validation errors (400, field-level detail in `ErrorResponse.fieldErrors`), `BusinessRuleException` (422), and any other exception (500). `ErrorResponse` carries `timestamp`, `status`, `error`, `message`, `path`, and an optional `fieldErrors` list.
 
 ## Testing strategy
 
@@ -361,24 +361,24 @@ Technical foundation: project scaffolding, Spring Batch/PostgreSQL setup, Docker
 
 ### Tasks
 
-- [ ] Initialize the project (Maven, Java 17, Spring Boot 4.1.x, `groupId com.edgareldy`, `artifactId spring-batch-tutorial`)
-- [ ] `.gitignore` (Maven `target/`, IDE files, `.env`)
-- [ ] Dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-batch`, `spring-boot-starter-validation`, `spring-boot-starter-actuator`, `flyway-core`, `postgresql`, `lombok`, `springdoc-openapi-starter-webmvc-ui`
-- [ ] Test dependencies: `spring-boot-starter-test`, `spring-batch-test`, `testcontainers`
-- [ ] Package layout above, under `com.edgareldy.springbatchtutorial` - `entity`/`repository`/`batch` stay empty until later branches populate them
-- [ ] `BatchConfig`: `JobRepository` and `PlatformTransactionManager` explicitly configured against the same PostgreSQL database as the business schema
-- [ ] Flyway script `V1__init_schema.sql` (employees, timesheet_entries, payroll_runs, payslips, rejected_timesheet_entries)
-- [ ] Flyway script `V2__init_spring_batch_metadata.sql` (Spring Batch's official PostgreSQL schema)
-- [ ] `application.yml`: `spring.batch.job.enabled=false`
-- [ ] `GlobalExceptionHandler`, `ApiResponse<T>`, `PageResponse<T>`
-- [ ] `Employee` seed data (a small fixed set of employees, inserted via Flyway, since this tutorial doesn't build employee-management CRUD)
-- [ ] Sample file `sample-data/timesheets-import-sample.csv` (deliberately including a few invalid rows and one employee with an anomalously high hour count, to exercise later branches)
-- [ ] `docker-compose.yml` (app + PostgreSQL), `Dockerfile` (multi-stage)
-- [ ] `.github/workflows/ci.yml`: `mvn verify`
-- [ ] `.github/workflows/pr-checks.yml`: Conventional Commits check on the PR range
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md`
-- [ ] Unit tests: `GlobalExceptionHandler` maps each exception type to the right status, always inside an `ApiResponse` with `success = false`
-- [ ] E2E test: `GET /actuator/health` returns 200
+- [x] Initialize the project (Maven, Java 17, Spring Boot 4.1.x, `groupId com.edgareldy`, `artifactId spring-batch-tutorial`)
+- [x] `.gitignore` (Maven `target/`, IDE files, `.env`)
+- [x] Dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-batch`, `spring-boot-starter-validation`, `spring-boot-starter-actuator`, `flyway-core`, `flyway-database-postgresql` (Flyway 9+ split PostgreSQL support into its own module), `postgresql`, `lombok`, `springdoc-openapi-starter-webmvc-ui`
+- [x] Test dependencies: `spring-boot-starter-test`, `spring-batch-test`, `testcontainers`
+- [x] Package layout above, under `com.edgareldy.springbatchtutorial` - `entity`/`repository`/`batch` stay empty until later branches populate them
+- [x] `BatchConfig`: `JobRepository` and `PlatformTransactionManager` explicitly configured against the same PostgreSQL database as the business schema
+- [x] Flyway script `V1__init_schema.sql` (employees, timesheet_entries, payroll_runs, payslips, rejected_timesheet_entries)
+- [x] Flyway script `V2__init_spring_batch_metadata.sql` (Spring Batch's official PostgreSQL schema)
+- [x] `application.yml`: `spring.batch.job.enabled=false`
+- [x] `GlobalExceptionHandler`, `ApiResponse<T>`, `PageResponse<T>`
+- [x] `Employee` seed data (a small fixed set of employees, inserted via Flyway, since this tutorial doesn't build employee-management CRUD)
+- [x] Sample file `sample-data/timesheets-import-sample.csv` (deliberately including a few invalid rows and one employee with an anomalously high hour count, to exercise later branches)
+- [x] `docker-compose.yml` (app + PostgreSQL), `Dockerfile` (multi-stage)
+- [x] `.github/workflows/ci.yml`: `mvn verify`
+- [x] `.github/workflows/pr-checks.yml`: Conventional Commits check on the PR range
+- [x] `.github/PULL_REQUEST_TEMPLATE.md`
+- [x] Unit tests: `GlobalExceptionHandler` maps each exception type to the right status, always inside an `ApiResponse` with `success = false`
+- [x] E2E test: `GET /actuator/health` returns 200
 
 ## feature/timesheet-import
 
@@ -393,18 +393,18 @@ Chunk-oriented step. First step of `monthlyPayrollJob`, runnable standalone for 
 
 ### Tasks
 
-- [ ] `TimesheetEntry`, `PayrollRun`, `PayrollRunStatus`, `RejectedTimesheetEntry` entities and repositories
-- [ ] `PayrollJobConfig`: defines `monthlyPayrollJob` with its first `Step`, `importTimesheets` (chunk size configurable, e.g. 100)
-- [ ] `TimesheetCsvItemReader` (`FlatFileItemReader<TimesheetCsvRow>`)
-- [ ] `TimesheetItemProcessor` (`ItemProcessor<TimesheetCsvRow, TimesheetEntry>`): validates `hours_worked` (> 0, ≤ 24), resolves `employee_id` from the CSV's email column via `EmployeeRepository`, throws a dedicated exception for an unknown employee to trigger a skip
-- [ ] `TimesheetItemWriter` (`ItemWriter<TimesheetEntry>`)
-- [ ] `TimesheetSkipListener` (`SkipListener<TimesheetCsvRow, TimesheetEntry>`): persists each rejected row into `rejected_timesheet_entries`, linked to the current `PayrollRun`
-- [ ] `.faultTolerant().skipLimit(...).skip(InvalidTimesheetRowException.class)` on the step
-- [ ] `ImportStepExecutionListener`: logs a read/written/skipped summary at step completion
-- [ ] `PayrollController`/`PayrollJobLauncherService`: creates a `PayrollRun` row (`status = STARTED`), then launches `monthlyPayrollJob` with `payrollRunId` + `period` as unique `JobParameters`
-- [ ] Unit tests: `TimesheetItemProcessor`'s validation rules as pure logic (mocked `EmployeeRepository`)
-- [ ] Integration tests (Testcontainers): `JobLauncherTestUtils.launchStep("importTimesheets", ...)` against the sample CSV - valid rows persisted, invalid rows land in `rejected_timesheet_entries` with the right reason
-- [ ] E2E test: launching `monthlyPayrollJob` with only this step wired stops cleanly after `importTimesheets` (later branches extend the flow)
+- [x] `TimesheetEntry`, `PayrollRun`, `PayrollRunStatus`, `RejectedTimesheetEntry` entities and repositories (plus `Employee`/`EmployeeRepository`, required by `TimesheetItemProcessor`)
+- [x] `PayrollJobConfig`: defines `monthlyPayrollJob` with its first `Step`, `importTimesheets` (chunk size configurable, e.g. 100)
+- [x] `TimesheetCsvItemReaderConfig` (`FlatFileItemReader<TimesheetCsvRow>`)
+- [x] `TimesheetItemProcessor` (`ItemProcessor<TimesheetCsvRow, TimesheetEntry>`): validates `hours_worked` (> 0, ≤ 24), resolves `employee_id` from the CSV's email column via `EmployeeRepository`, throws a dedicated exception for an unknown employee to trigger a skip
+- [x] `TimesheetItemWriter` (`ItemWriter<TimesheetEntry>`)
+- [x] `TimesheetSkipListener` (`SkipListener<TimesheetCsvRow, TimesheetEntry>`): persists each rejected row into `rejected_timesheet_entries`, linked to the current `PayrollRun`
+- [x] `.faultTolerant().skipLimit(...).skip(InvalidTimesheetRowException.class)` on the step
+- [x] `ImportStepExecutionListener`: logs a read/written/skipped summary at step completion
+- [x] `PayrollController`/`PayrollJobLauncherService`: creates a `PayrollRun` row (`status = STARTED`), then launches `monthlyPayrollJob` with `payrollRunId` + `period` as unique `JobParameters`
+- [x] Unit tests: `TimesheetItemProcessor`'s validation rules as pure logic (mocked `EmployeeRepository`)
+- [x] Integration tests (Testcontainers): `JobLauncherTestUtils.launchStep("importTimesheets", ...)` against the sample CSV - valid rows persisted, invalid rows land in `rejected_timesheet_entries` with the right reason
+- [x] E2E test: launching `monthlyPayrollJob` with only this step wired stops cleanly after `importTimesheets` (later branches extend the flow)
 
 ## feature/payroll-calculation
 
@@ -412,15 +412,15 @@ Adds two steps to `monthlyPayrollJob`, chained after `importTimesheets`: one Tas
 
 ### Tasks
 
-- [ ] `AggregateHoursTasklet` (Tasklet): a single grouped SQL query (`SUM(hours_worked) GROUP BY employee_id`) over the current run's `timesheet_entries`, exposed as a repository method (`TimesheetEntryRepository.aggregateHoursByEmployee(payrollRunId)`) reused by both this tasklet and `EmployeeHoursItemReader` below
-- [ ] Anomaly detection inside `AggregateHoursTasklet`: any employee whose aggregated hours exceed a configurable threshold (e.g. 300h/month) sets a boolean `hasAnomalies` flag (and the offending count) in the `StepExecution`'s `ExecutionContext` - the *only* thing this tasklet writes there, since `ExecutionContext` is meant for small metadata, not for carrying bulk aggregated rows between steps
-- [ ] `EmployeeHoursItemReader` (`JpaPagingItemReader`, or a custom `ItemReader` wrapping the same grouped repository query as the tasklet above): re-runs the aggregation as a paginated read, one page per chunk, rather than trying to pass the full result set through the `ExecutionContext` - the tasklet and this reader both call the same repository method, so the aggregation logic itself is defined once
-- [ ] `PayslipItemProcessor` (`ItemProcessor<EmployeeHoursAggregate, Payslip>`): computes `gross_pay = total_hours * hourly_rate` with a 1.5× multiplier on hours beyond 160/month, `deductions` as a flat percentage, `net_pay = gross_pay - deductions`, as a pure, independently testable calculation method
-- [ ] `PayslipItemWriter` (`ItemWriter<Payslip>`)
-- [ ] `PayrollJobConfig` updated: `importTimesheets` → `aggregateHoursPerEmployee` → `calculatePayslips`, in that order
-- [ ] Unit tests: gross/net pay computation as a pure function, including the overtime multiplier boundary (exactly 160h, 160.01h)
-- [ ] Integration tests (Testcontainers): `aggregateHoursPerEmployee` produces correct per-employee totals against real timesheet data; `calculatePayslips` persists the expected `Payslip` rows
-- [ ] E2E test: running the three chained steps against the sample CSV produces the expected payslips for every valid employee
+- [x] `AggregateHoursTasklet` (Tasklet): a single grouped SQL query (`SUM(hours_worked) GROUP BY employee_id`) over the current run's `timesheet_entries`, exposed as a repository method (`TimesheetEntryRepository.aggregateHoursByEmployee(payrollRunId)`) reused by both this tasklet and `EmployeeHoursItemReader` below
+- [x] Anomaly detection inside `AggregateHoursTasklet`: any employee whose aggregated hours exceed a configurable threshold (e.g. 300h/month) sets a boolean `hasAnomalies` flag (and the offending count) in the `StepExecution`'s `ExecutionContext` - the *only* thing this tasklet writes there, since `ExecutionContext` is meant for small metadata, not for carrying bulk aggregated rows between steps
+- [x] `EmployeeHoursItemReader` (`JpaPagingItemReader`, or a custom `ItemReader` wrapping the same grouped repository query as the tasklet above): re-runs the aggregation as a paginated read, one page per chunk, rather than trying to pass the full result set through the `ExecutionContext` - the tasklet and this reader both call the same repository method, so the aggregation logic itself is defined once
+- [x] `PayslipItemProcessor` (`ItemProcessor<EmployeeHoursAggregate, Payslip>`): computes `gross_pay = total_hours * hourly_rate` with a 1.5× multiplier on hours beyond 160/month, `deductions` as a flat percentage, `net_pay = gross_pay - deductions`, as a pure, independently testable calculation method
+- [x] `PayslipItemWriter` (`ItemWriter<Payslip>`)
+- [x] `PayrollJobConfig` updated: `importTimesheets` → `aggregateHoursPerEmployee` → `calculatePayslips`, in that order
+- [x] Unit tests: gross/net pay computation as a pure function, including the overtime multiplier boundary (exactly 160h, 160.01h)
+- [x] Integration tests (Testcontainers): `aggregateHoursPerEmployee` produces correct per-employee totals against real timesheet data; `calculatePayslips` persists the expected `Payslip` rows
+- [x] E2E test: running the three chained steps against the sample CSV produces the expected payslips for every valid employee
 
 ## feature/conditional-flow
 
@@ -434,14 +434,14 @@ Inserts a `JobExecutionDecider` between `aggregateHoursPerEmployee` and `calcula
 
 ### Tasks
 
-- [ ] `AnomalyReviewDecider` (`JobExecutionDecider`): reads the `hasAnomalies` flag set by `AggregateHoursTasklet`, returns a distinct `FlowExecutionStatus` (`REVIEW_REQUIRED` vs. `PROCEED`)
-- [ ] `FlagForReviewTasklet`: on the `REVIEW_REQUIRED` path, sets `PayrollRun.status = AWAITING_REVIEW` and ends the job flow (the `JobExecution` itself still completes normally - see [Why these library choices](#why-these-library-choices))
-- [ ] `PayrollJobConfig` updated: `.next(aggregateHoursPerEmployee).next(anomalyReviewDecider).on("REVIEW_REQUIRED").to(flagForReviewStep).from(anomalyReviewDecider).on("PROCEED").to(calculatePayslips)...`
-- [ ] Second `Job` bean, `payrollFinalizeJob`, reusing the existing `calculatePayslips` step (and, once available, `exportPayrollSummary`), launched by `POST /api/v1/payroll/runs/{id}/resume` after a human has reviewed the anomaly out-of-band; sets `PayrollRun.status` back to `STARTED` before launching
-- [ ] Business rule: `resume` on a `PayrollRun` not currently `AWAITING_REVIEW` returns a `BusinessRuleException` (422)
-- [ ] Unit tests: `AnomalyReviewDecider` returns the right status for both a clean and an anomalous `ExecutionContext`
-- [ ] Integration tests (Testcontainers): a run seeded with an anomalous employee stops at `AWAITING_REVIEW` with no `Payslip` rows written yet
-- [ ] E2E test: full anomaly path - import (with one employee over the threshold) → aggregate → flagged for review → `resume` → `calculatePayslips` runs and produces the missing payslips
+- [x] `AnomalyReviewDecider` (`JobExecutionDecider`): reads the `hasAnomalies` flag set by `AggregateHoursTasklet`, returns a distinct `FlowExecutionStatus` (`REVIEW_REQUIRED` vs. `PROCEED`)
+- [x] `FlagForReviewTasklet`: on the `REVIEW_REQUIRED` path, sets `PayrollRun.status = AWAITING_REVIEW` and ends the job flow (the `JobExecution` itself still completes normally - see [Why these library choices](#why-these-library-choices))
+- [x] `PayrollJobConfig` updated: `.next(aggregateHoursPerEmployee).next(anomalyReviewDecider).on("REVIEW_REQUIRED").to(flagForReviewStep).from(anomalyReviewDecider).on("PROCEED").to(calculatePayslips)...`
+- [x] Second `Job` bean, `payrollFinalizeJob`, reusing the existing `calculatePayslips` step (and, once available, `exportPayrollSummary`), launched by `POST /api/v1/payroll/runs/{id}/resume` after a human has reviewed the anomaly out-of-band; sets `PayrollRun.status` back to `STARTED` before launching
+- [x] Business rule: `resume` on a `PayrollRun` not currently `AWAITING_REVIEW` returns a `BusinessRuleException` (422)
+- [x] Unit tests: `AnomalyReviewDecider` returns the right status for both a clean and an anomalous `ExecutionContext`
+- [x] Integration tests (Testcontainers): a run seeded with an anomalous employee stops at `AWAITING_REVIEW` with no `Payslip` rows written yet
+- [x] E2E test: full anomaly path - import (with one employee over the threshold) → aggregate → flagged for review → `resume` → `calculatePayslips` runs and produces the missing payslips
 
 ## feature/export-and-scheduling
 
@@ -455,13 +455,13 @@ Adds the final step and the ways to trigger the whole job.
 
 ### Tasks
 
-- [ ] `ExportPayrollSummaryTasklet` (Tasklet): one query joining `Payslip`/`Employee` for the current run, one `FlatFileItemWriter`-backed CSV write (`payroll-summary-<year>-<month>.csv`)
-- [ ] `PayrollJobConfig` updated: `calculatePayslips` → `exportPayrollSummary` → `PayrollRun.status = COMPLETED`, `completed_at` set
-- [ ] `SchedulingConfig` (`@EnableScheduling`): a `@Scheduled` cron trigger (e.g. `0 0 3 1 * *`, first day of the month) launching `monthlyPayrollJob` for the previous period automatically
-- [ ] `GET /api/v1/payroll/runs`: paginated listing backed by `PayrollRunRepository`, for an admin to see run history without querying `BATCH_JOB_EXECUTION` directly
-- [ ] Unit tests: the cron expression triggers at the expected instants (tested in isolation, not by waiting a real month)
-- [ ] Integration tests (Testcontainers): `exportPayrollSummary` produces a CSV with the exact expected rows for a known set of payslips
-- [ ] E2E test: the complete happy path from `POST /api/v1/payroll/runs` to a `COMPLETED` `PayrollRun` with a generated summary file, verified end to end
+- [x] `ExportPayrollSummaryTasklet` (Tasklet): one query joining `Payslip`/`Employee` for the current run, one `FlatFileItemWriter`-backed CSV write (`payroll-summary-<year>-<month>.csv`)
+- [x] `PayrollJobConfig` updated: `calculatePayslips` → `exportPayrollSummary` → `PayrollRun.status = COMPLETED`, `completed_at` set
+- [x] `SchedulingConfig` (`@EnableScheduling`): a `@Scheduled` cron trigger (e.g. `0 0 3 1 * *`, first day of the month) launching `monthlyPayrollJob` for the previous period automatically
+- [x] `GET /api/v1/payroll/runs`: paginated listing backed by `PayrollRunRepository`, for an admin to see run history without querying `BATCH_JOB_EXECUTION` directly
+- [x] Unit tests: the cron expression triggers at the expected instants (tested in isolation, not by waiting a real month)
+- [x] Integration tests (Testcontainers): `exportPayrollSummary` produces a CSV with the exact expected rows for a known set of payslips
+- [x] E2E test: the complete happy path from `POST /api/v1/payroll/runs` to a `COMPLETED` `PayrollRun` with a generated summary file, verified end to end
 
 ## feature/parallel-processing (bonus)
 
@@ -469,10 +469,72 @@ Demonstrates scaling `calculatePayslips` to a large employee count.
 
 ### Tasks
 
-- [ ] `EmployeePartitioner` (`Partitioner`): splits employees into N partitions (by id range)
-- [ ] Reconfigure `calculatePayslips` as a master/worker `Step` (`partitionStep`), with a dedicated `TaskExecutor` (`ThreadPoolTaskExecutor`) running partitions in parallel
-- [ ] Execution time comparison (before/after partitioning), documented in the branch's README, against a large generated employee/timesheet dataset (e.g. 10,000 employees)
-- [ ] Documented note on concurrent database write safety (per-partition transactions, no conflicting writes on the same `Payslip` rows)
+- [x] `EmployeePartitioner` (`Partitioner`): splits employees into N partitions (by id range)
+- [x] Reconfigure `calculatePayslips` as a master/worker `Step` (`partitionStep`), with a dedicated `TaskExecutor` (`ThreadPoolTaskExecutor`) running partitions in parallel
+- [x] Execution time comparison (before/after partitioning), documented in the branch's README, against a large generated employee/timesheet dataset (e.g. 10,000 employees)
+- [x] Documented note on concurrent database write safety (per-partition transactions, no conflicting writes on the same `Payslip` rows)
+
+### Execution time comparison
+
+Measured with `CalculatePayslipsPartitioningBenchmark`
+(`src/test/java/com/edgareldy/springbatchtutorial/integration/CalculatePayslipsPartitioningBenchmark.java`),
+a one-off benchmark class deliberately named so Maven Surefire's default
+`Test*`/`*Test`/`*Tests`/`*TestCase` include patterns never pick it up: it
+never runs as part of `mvn verify` or CI, only on demand with
+`mvn test -Dtest=CalculatePayslipsPartitioningBenchmark`, since wall-clock
+timing assertions would be flaky on a shared CI runner. It generates 10,000
+`Employee` rows and 40,000 `TimesheetEntry` rows (4 each, all below the
+overtime threshold so the comparison measures partitioning, not overtime
+math), then runs `calculatePayslips` twice against that same dataset: once
+with `gridSize(1)` on a `SyncTaskExecutor` (single partition, running on the
+calling thread, the honest sequential-equivalent baseline, since the actual
+pre-partitioning `calculatePayslips` `Step` no longer exists to benchmark
+directly), and once with `gridSize(8)` on a dedicated 8-thread
+`ThreadPoolTaskExecutor`. Elapsed time is read from the real
+`StepExecution.getStartTime()`/`getEndTime()` across every partition the run
+produced (not a coarse wrapper around the launch call).
+
+| Variant | `StepExecution` elapsed | Payslips written |
+|---|---|---|
+| Sequential (`gridSize=1`) | 25,088 ms (~25.1 s) | 10,000 |
+| Parallel (`gridSize=8`) | 8,651 ms (~8.65 s) | 10,000 |
+| **Speedup** | **2.90x** | |
+
+The parallel run's logs confirm a genuine 8-way fan-out (all 8
+`calculatePayslipsWorker:partitionN` executions completed within ~200ms of
+each other, each on a disjoint, near-evenly-sized employee id range from
+`EmployeePartitioner`), not one worker doing all the work while the rest sat
+idle. The speedup is real but well short of 8x, which is the expected shape
+for this kind of workload rather than a red flag: `spring.datasource.hikari.*`
+is never overridden in this project, so the connection pool defaults to a
+maximum of 10 connections, shared by all 8 worker threads plus the
+`JobRepository`'s own step-bookkeeping writes (`BATCH_STEP_EXECUTION`
+updates on every chunk commit) - a pool sized barely above the worker count
+is a plausible ceiling on how close to linear the scaling can get. Bumping
+`maximum-pool-size` well above 8 and re-running the benchmark is a natural
+follow-up experiment for a reader who wants to push the comparison further,
+deliberately left as an exercise rather than folded into this branch's
+default configuration.
+
+### Concurrent database write safety
+
+`EmployeePartitioner` splits the `employees` id space into contiguous,
+non-overlapping ranges (see its own Javadoc for the exact boundary math), so
+by construction no two worker partitions ever process the same employee: two
+threads can never compute or write a `Payslip` for the same `employee_id` at
+the same time, so there is no read-modify-write race on the same row to
+guard against, no need for pessimistic/optimistic locking, and no risk of one
+partition's commit overwriting another's. Each `calculatePayslipsWorker`
+partition also runs its own chunk-scoped transaction via the shared
+`PlatformTransactionManager` (the same transaction manager every other
+chunk-oriented step in this project already uses), so a failure in one
+partition rolls back only that partition's own uncommitted chunk, never
+another partition's already-committed work. The only shared, genuinely
+concurrent resource across partitions is the database connection pool
+itself (see the execution time comparison above), a throughput/latency
+concern, not a correctness one: HikariCP hands out and returns connections
+safely under concurrent use, so contention there can only slow partitions
+down, never corrupt data.
 
 ## Order of work
 
