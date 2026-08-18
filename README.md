@@ -455,13 +455,13 @@ Adds the final step and the ways to trigger the whole job.
 
 ### Tasks
 
-- [ ] `ExportPayrollSummaryTasklet` (Tasklet): one query joining `Payslip`/`Employee` for the current run, one `FlatFileItemWriter`-backed CSV write (`payroll-summary-<year>-<month>.csv`)
-- [ ] `PayrollJobConfig` updated: `calculatePayslips` → `exportPayrollSummary` → `PayrollRun.status = COMPLETED`, `completed_at` set
-- [ ] `SchedulingConfig` (`@EnableScheduling`): a `@Scheduled` cron trigger (e.g. `0 0 3 1 * *`, first day of the month) launching `monthlyPayrollJob` for the previous period automatically
-- [ ] `GET /api/v1/payroll/runs`: paginated listing backed by `PayrollRunRepository`, for an admin to see run history without querying `BATCH_JOB_EXECUTION` directly
-- [ ] Unit tests: the cron expression triggers at the expected instants (tested in isolation, not by waiting a real month)
-- [ ] Integration tests (Testcontainers): `exportPayrollSummary` produces a CSV with the exact expected rows for a known set of payslips
-- [ ] E2E test: the complete happy path from `POST /api/v1/payroll/runs` to a `COMPLETED` `PayrollRun` with a generated summary file, verified end to end
+- [x] `ExportPayrollSummaryTasklet` (Tasklet): one query joining `Payslip`/`Employee` for the current run, one `FlatFileItemWriter`-backed CSV write (`payroll-summary-<year>-<month>.csv`)
+- [x] `PayrollJobConfig` updated: `calculatePayslips` → `exportPayrollSummary` → `PayrollRun.status = COMPLETED`, `completed_at` set
+- [x] `SchedulingConfig` (`@EnableScheduling`): a `@Scheduled` cron trigger (e.g. `0 0 3 1 * *`, first day of the month) launching `monthlyPayrollJob` for the previous period automatically
+- [x] `GET /api/v1/payroll/runs`: paginated listing backed by `PayrollRunRepository`, for an admin to see run history without querying `BATCH_JOB_EXECUTION` directly
+- [x] Unit tests: the cron expression triggers at the expected instants (tested in isolation, not by waiting a real month)
+- [x] Integration tests (Testcontainers): `exportPayrollSummary` produces a CSV with the exact expected rows for a known set of payslips
+- [x] E2E test: the complete happy path from `POST /api/v1/payroll/runs` to a `COMPLETED` `PayrollRun` with a generated summary file, verified end to end
 
 ## feature/parallel-processing (bonus)
 
