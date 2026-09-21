@@ -77,7 +77,7 @@ class MonthlyPayrollJobAnomalyPathIntegrationTest {
     private PayslipRepository payslipRepository;
 
     @Test
-    void runSeededWithAnAnomalousEmployeeStopsAtAwaitingReviewWithNoPayslipsWritten() throws Exception {
+    void _01_ShouldStopAtAwaitingReviewWithNoPayslips_WhenSeededEmployeeIsAnomalous() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         seedTimesheetData(payrollRun);
 

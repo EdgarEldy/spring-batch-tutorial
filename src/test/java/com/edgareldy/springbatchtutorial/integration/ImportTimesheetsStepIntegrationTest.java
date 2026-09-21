@@ -68,7 +68,7 @@ class ImportTimesheetsStepIntegrationTest {
     private RejectedTimesheetEntryRepository rejectedTimesheetEntryRepository;
 
     @Test
-    void importsAllValidRowsFromSampleCsv() throws Exception {
+    void _01_ShouldImportAllValidRows_WhenSampleCsvIsProcessed() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         long validRowsBefore = timesheetEntryRepository.count();
 
@@ -90,7 +90,7 @@ class ImportTimesheetsStepIntegrationTest {
     }
 
     @Test
-    void rejectsKnownInvalidRowsWithReasonLinkedToTheirPayrollRun() throws Exception {
+    void _02_ShouldRejectInvalidRowsWithReason_WhenRowsAreInvalid() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
 
         JobExecution execution = jobLauncherTestUtils.launchStep(
