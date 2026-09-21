@@ -73,7 +73,7 @@ class MonthlyPayrollJobE2ETest {
     private PayslipRepository payslipRepository;
 
     @Test
-    void runningTheRealSampleCsvStopsAtAwaitingReviewBecauseDavidChenExceedsTheAnomalyThreshold() throws Exception {
+    void _01_ShouldStopAtAwaitingReview_WhenRealSampleCsvContainsEmployeeAboveAnomalyThreshold() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         JobParameters jobParameters = jobParametersFor(payrollRun);
 

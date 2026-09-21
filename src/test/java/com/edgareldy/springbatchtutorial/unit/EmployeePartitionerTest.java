@@ -54,7 +54,7 @@ class EmployeePartitionerTest {
     private EmployeePartitioner partitioner;
 
     @Test
-    void evenlyDivisibleRange_producesEqualContiguousRanges() {
+    void _01_ShouldProduceEqualContiguousRanges_WhenRangeIsEvenlyDivisible() {
         partitioner = new EmployeePartitioner(employeeRepository);
         when(employeeRepository.findMinId()).thenReturn(1L);
         when(employeeRepository.findMaxId()).thenReturn(100L);
@@ -71,7 +71,7 @@ class EmployeePartitionerTest {
     }
 
     @Test
-    void unevenRange_staysContiguousNonOverlappingAndCoversTheFullSpan() {
+    void _02_ShouldStayContiguousAndCoverFullSpan_WhenRangeIsUneven() {
         partitioner = new EmployeePartitioner(employeeRepository);
         when(employeeRepository.findMinId()).thenReturn(1L);
         when(employeeRepository.findMaxId()).thenReturn(10L);
@@ -88,7 +88,7 @@ class EmployeePartitionerTest {
     }
 
     @Test
-    void fewerDistinctIdsThanGridSize_producesFewerPartitionsNotEmptyOnes() {
+    void _03_ShouldProduceFewerPartitions_WhenDistinctIdsAreFewerThanGridSize() {
         partitioner = new EmployeePartitioner(employeeRepository);
         when(employeeRepository.findMinId()).thenReturn(1L);
         when(employeeRepository.findMaxId()).thenReturn(1L);
@@ -102,7 +102,7 @@ class EmployeePartitionerTest {
     }
 
     @Test
-    void tinyRangeSmallerThanGridSize_producesFewerNonEmptyPartitions() {
+    void _04_ShouldProduceFewerNonEmptyPartitions_WhenRangeIsSmallerThanGridSize() {
         partitioner = new EmployeePartitioner(employeeRepository);
         when(employeeRepository.findMinId()).thenReturn(1L);
         when(employeeRepository.findMaxId()).thenReturn(2L);
@@ -120,7 +120,7 @@ class EmployeePartitionerTest {
     }
 
     @Test
-    void emptyEmployeesTable_producesExactlyOneInvertedEmptyRangePartition() {
+    void _05_ShouldProduceOneInvertedEmptyRangePartition_WhenEmployeesTableIsEmpty() {
         partitioner = new EmployeePartitioner(employeeRepository);
         when(employeeRepository.findMinId()).thenReturn(null);
         when(employeeRepository.findMaxId()).thenReturn(null);

@@ -78,7 +78,7 @@ class AggregateHoursPerEmployeeStepIntegrationTest {
     private EmployeeRepository employeeRepository;
 
     @Test
-    void producesCorrectPerEmployeeTotalsAndFlagsTheOneEmployeeAboveTheAnomalyThreshold() throws Exception {
+    void _01_ShouldComputeTotalsAndFlagAnomalousEmployee_WhenOneEmployeeExceedsAnomalyThreshold() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         seedTimesheetData(payrollRun);
 

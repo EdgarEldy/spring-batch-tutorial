@@ -91,7 +91,7 @@ class ExportPayrollSummaryStepIntegrationTest {
     }
 
     @Test
-    void producesCsvWithExactExpectedRowsForAKnownSetOfPayslips() throws Exception {
+    void _01_ShouldProduceCsvWithExpectedRows_WhenKnownPayslipsExist() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         Payslip alicePayslip = seedPayslip(
                 payrollRun, "alice.martin@example.com",
@@ -119,7 +119,7 @@ class ExportPayrollSummaryStepIntegrationTest {
     }
 
     @Test
-    void producesOnlyTheHeaderRowWhenTheRunHasNoPayslips() throws Exception {
+    void _02_ShouldProduceOnlyHeaderRow_WhenRunHasNoPayslips() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
 
         JobExecution execution = jobLauncherTestUtils.launchStep("exportPayrollSummary", jobParametersFor(payrollRun));
