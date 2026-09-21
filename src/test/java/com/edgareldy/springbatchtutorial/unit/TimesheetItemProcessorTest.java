@@ -54,7 +54,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void hoursWorkedExactlyZero_isRejected() {
+    void _01_ShouldRejectRow_WhenHoursWorkedIsExactlyZero() {
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "0.00");
 
         assertThatThrownBy(() -> processor.process(row))
@@ -66,7 +66,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void hoursWorkedNegative_isRejected() {
+    void _02_ShouldRejectRow_WhenHoursWorkedIsNegative() {
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "-1.00");
 
         assertThatThrownBy(() -> processor.process(row))
@@ -76,7 +76,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void hoursWorkedExactly24_isAccepted() {
+    void _03_ShouldAcceptRow_WhenHoursWorkedIsExactly24() {
         Employee employee = knownEmployee();
         when(employeeRepository.findByEmail(KNOWN_EMAIL)).thenReturn(Optional.of(employee));
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "24.00");
@@ -88,7 +88,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void hoursWorkedAbove24_isRejected() {
+    void _04_ShouldRejectRow_WhenHoursWorkedIsAbove24() {
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "24.01");
 
         assertThatThrownBy(() -> processor.process(row))
@@ -99,7 +99,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void hoursWorkedWellAbove24_isRejected() {
+    void _05_ShouldRejectRow_WhenHoursWorkedIsWellAbove24() {
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "25.00");
 
         assertThatThrownBy(() -> processor.process(row))
@@ -110,7 +110,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void hoursWorkedNotANumber_isRejected() {
+    void _06_ShouldRejectRow_WhenHoursWorkedIsNotANumber() {
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "not-a-number");
 
         assertThatThrownBy(() -> processor.process(row))
@@ -120,7 +120,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void invalidWorkDate_isRejected() {
+    void _07_ShouldRejectRow_WhenWorkDateIsInvalid() {
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, "not-a-date", "8.00");
 
         assertThatThrownBy(() -> processor.process(row))
@@ -132,7 +132,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void unknownEmployeeEmail_isRejected() {
+    void _08_ShouldRejectRow_WhenEmployeeEmailIsUnknown() {
         String unknownEmail = "unknown.employee@example.com";
         when(employeeRepository.findByEmail(unknownEmail)).thenReturn(Optional.empty());
         TimesheetCsvRow row = new TimesheetCsvRow(unknownEmail, VALID_WORK_DATE, "8.00");
@@ -144,7 +144,7 @@ class TimesheetItemProcessorTest {
     }
 
     @Test
-    void nominalRow_isTransformedIntoAPersistableEntry() {
+    void _09_ShouldReturnPersistableEntry_WhenRowIsNominal() {
         Employee employee = knownEmployee();
         when(employeeRepository.findByEmail(KNOWN_EMAIL)).thenReturn(Optional.of(employee));
         TimesheetCsvRow row = new TimesheetCsvRow(KNOWN_EMAIL, VALID_WORK_DATE, "8.00");
