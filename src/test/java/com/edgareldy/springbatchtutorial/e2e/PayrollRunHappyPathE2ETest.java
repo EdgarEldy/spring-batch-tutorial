@@ -96,7 +96,7 @@ class PayrollRunHappyPathE2ETest {
     }
 
     @Test
-    void postCreateRunThenResumeReachesCompletedWithAGeneratedSummaryFile() throws IOException {
+    void _01_ShouldReachCompletedWithSummaryFile_WhenRunIsCreatedThenResumed() throws IOException {
         ApiResponse<PayrollRunResponse> createResponse = client.post()
                 .uri("/api/v1/payroll/runs")
                 .contentType(MediaType.APPLICATION_JSON)
