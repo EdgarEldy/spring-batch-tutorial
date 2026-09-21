@@ -36,7 +36,7 @@ class AnomalyReviewDeciderTest {
     private final AnomalyReviewDecider decider = new AnomalyReviewDecider();
 
     @Test
-    void anomalousExecutionContext_routesToReviewRequired() {
+    void _01_ShouldRouteToReviewRequired_WhenExecutionContextIsAnomalous() {
         StepExecution stepExecution = stepExecutionWithHasAnomalies(true);
 
         FlowExecutionStatus status = decider.decide(stepExecution.getJobExecution(), stepExecution);
@@ -45,7 +45,7 @@ class AnomalyReviewDeciderTest {
     }
 
     @Test
-    void cleanExecutionContext_routesToProceed() {
+    void _02_ShouldRouteToProceed_WhenExecutionContextIsClean() {
         StepExecution stepExecution = stepExecutionWithHasAnomalies(false);
 
         FlowExecutionStatus status = decider.decide(stepExecution.getJobExecution(), stepExecution);
@@ -54,7 +54,7 @@ class AnomalyReviewDeciderTest {
     }
 
     @Test
-    void missingHasAnomaliesKey_defaultsToProceed() {
+    void _03_ShouldDefaultToProceed_WhenHasAnomaliesKeyIsMissing() {
         StepExecution stepExecution = MetaDataInstanceFactory.createStepExecution(
                 jobParameters(), new ExecutionContext());
 
