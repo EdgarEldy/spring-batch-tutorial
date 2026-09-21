@@ -107,7 +107,7 @@ class MonthlyPayrollJobAnomalyResumeE2ETest {
     private PayrollJobLauncherService payrollJobLauncherService;
 
     @Test
-    void fullAnomalyPath_importAggregateFlagResumeCalculatePayslips() throws Exception {
+    void _01_ShouldImportFlagResumeAndCalculatePayslips_WhenAnomalyPathIsFollowedEndToEnd() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
 
         JobExecution monthlyExecution = jobLauncherTestUtils.launchJob(jobParametersFor(payrollRun));
