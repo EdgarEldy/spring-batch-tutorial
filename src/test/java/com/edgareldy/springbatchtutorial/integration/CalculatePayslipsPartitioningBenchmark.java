@@ -126,7 +126,7 @@ class CalculatePayslipsPartitioningBenchmark {
     private PayslipRepository payslipRepository;
 
     @Test
-    void comparesSequentialVsPartitionedExecutionTimeAt10kEmployees() throws Exception {
+    void _01_ShouldCompareSequentialAndPartitionedExecutionTime_WhenTenThousandEmployeesArePresent() throws Exception {
         List<Employee> employees = generateEmployees();
         generateTimesheetEntries(employees);
         log.info("Benchmark dataset ready: {} employees, {} timesheet entries",
