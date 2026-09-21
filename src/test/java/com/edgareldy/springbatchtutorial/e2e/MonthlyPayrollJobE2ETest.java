@@ -99,7 +99,7 @@ class MonthlyPayrollJobE2ETest {
     private PayslipRepository payslipRepository;
 
     @Test
-    void runningTheThreeChainedStepsProducesExpectedPayslipsForEveryValidEmployee() throws Exception {
+    void _01_ShouldProduceExpectedPayslips_WhenThreeChainedStepsRunForEveryValidEmployee() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("payrollRunId", payrollRun.getId())
