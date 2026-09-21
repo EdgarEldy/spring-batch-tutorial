@@ -31,7 +31,7 @@ class PayslipItemProcessorTest {
     private static final BigDecimal DEDUCTION_RATE = new BigDecimal("0.15");
 
     @Test
-    void hoursBelowThreshold_noOvertimeApplied() {
+    void _01_ShouldApplyNoOvertime_WhenHoursAreBelowThreshold() {
         BigDecimal grossPay = PayslipItemProcessor.computeGrossPay(
                 new BigDecimal("40"), HOURLY_RATE, OVERTIME_THRESHOLD_HOURS, OVERTIME_MULTIPLIER);
 
@@ -39,7 +39,7 @@ class PayslipItemProcessorTest {
     }
 
     @Test
-    void hoursExactly160_noOvertimeApplied() {
+    void _02_ShouldApplyNoOvertime_WhenHoursAreExactly160() {
         BigDecimal grossPay = PayslipItemProcessor.computeGrossPay(
                 new BigDecimal("160"), HOURLY_RATE, OVERTIME_THRESHOLD_HOURS, OVERTIME_MULTIPLIER);
 
@@ -49,7 +49,7 @@ class PayslipItemProcessorTest {
     }
 
     @Test
-    void hoursJustAboveThreshold_overtimeAppliedOnlyToTheFraction() {
+    void _03_ShouldApplyOvertimeToFractionOnly_WhenHoursAreJustAboveThreshold() {
         BigDecimal grossPay = PayslipItemProcessor.computeGrossPay(
                 new BigDecimal("160.01"), HOURLY_RATE, OVERTIME_THRESHOLD_HOURS, OVERTIME_MULTIPLIER);
 
@@ -58,7 +58,7 @@ class PayslipItemProcessorTest {
     }
 
     @Test
-    void hoursWellAboveThreshold_overtimeAppliedToTheFullExcess() {
+    void _04_ShouldApplyOvertimeToFullExcess_WhenHoursAreWellAboveThreshold() {
         BigDecimal grossPay = PayslipItemProcessor.computeGrossPay(
                 new BigDecimal("200"), HOURLY_RATE, OVERTIME_THRESHOLD_HOURS, OVERTIME_MULTIPLIER);
 
@@ -67,28 +67,28 @@ class PayslipItemProcessorTest {
     }
 
     @Test
-    void deductions_areAFlatPercentageOfGrossPay() {
+    void _05_ShouldComputeDeductionsAsFlatPercentage_WhenGrossPayIsKnown() {
         BigDecimal deductions = PayslipItemProcessor.computeDeductions(new BigDecimal("1000.00"), DEDUCTION_RATE);
 
         assertThat(deductions).isEqualByComparingTo("150.00");
     }
 
     @Test
-    void deductions_onTheOvertimeGrossPayFigure() {
+    void _06_ShouldComputeDeductionsOnOvertimeGrossPay_WhenOvertimeApplies() {
         BigDecimal deductions = PayslipItemProcessor.computeDeductions(new BigDecimal("8800.00"), DEDUCTION_RATE);
 
         assertThat(deductions).isEqualByComparingTo("1320.00");
     }
 
     @Test
-    void netPay_isGrossPayMinusDeductions() {
+    void _07_ShouldComputeNetPayAsGrossMinusDeductions_WhenGrossPayAndDeductionsAreKnown() {
         BigDecimal netPay = PayslipItemProcessor.computeNetPay(new BigDecimal("1000.00"), new BigDecimal("150.00"));
 
         assertThat(netPay).isEqualByComparingTo("850.00");
     }
 
     @Test
-    void netPay_endToEndFromRawHoursIncludingOvertime() {
+    void _08_ShouldComputeNetPayFromRawHours_WhenOvertimeIsIncluded() {
         // David Chen's real scenario from the sample CSV: 312h, i.e. 160
         // regular hours plus 152 overtime hours, hourly rate 38.00.
         BigDecimal grossPay = PayslipItemProcessor.computeGrossPay(
