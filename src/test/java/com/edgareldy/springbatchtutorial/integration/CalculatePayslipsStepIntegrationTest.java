@@ -81,7 +81,7 @@ class CalculatePayslipsStepIntegrationTest {
     private PayslipRepository payslipRepository;
 
     @Test
-    void persistsExpectedPayslipRowsForNormalAndOvertimeEmployees() throws Exception {
+    void _01_ShouldPersistExpectedPayslipRows_WhenEmployeesHaveNormalAndOvertimeHours() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         seedTimesheetData(payrollRun);
 
