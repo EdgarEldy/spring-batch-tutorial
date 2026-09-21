@@ -48,7 +48,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleResourceNotFound_mapsTo404AndKeepsExceptionMessage() {
+    void _01_ShouldReturn404AndKeepMessage_WhenResourceNotFoundIsHandled() {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         ResourceNotFoundException ex = new ResourceNotFoundException("PayrollRun 42 not found");
 
@@ -69,7 +69,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleBusinessRule_mapsTo422AndKeepsExceptionMessage() {
+    void _02_ShouldReturn422AndKeepMessage_WhenBusinessRuleViolationIsHandled() {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         BusinessRuleException ex = new BusinessRuleException("PayrollRun is not AWAITING_REVIEW");
 
@@ -88,7 +88,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleValidation_mapsTo400AndPopulatesFieldErrors() {
+    void _03_ShouldReturn400WithFieldErrors_WhenValidationFails() {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         MethodArgumentNotValidException ex = org.mockito.Mockito.mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = org.mockito.Mockito.mock(BindingResult.class);
@@ -115,7 +115,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleGeneric_mapsTo500AndNeverExposesRawExceptionMessage() {
+    void _04_ShouldReturn500WithoutRawMessage_WhenUnexpectedExceptionIsHandled() {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(request.getMethod()).thenReturn("POST");
         Exception ex = new IllegalStateException("connection refused: db-host:5432");
