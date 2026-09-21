@@ -38,7 +38,7 @@ import org.springframework.test.context.ActiveProfiles;
  * {@link PayrollRun} to mirror the real {@code monthlyPayrollJob} ordering,
  * against a real PostgreSQL instance (Testcontainers). Seeds real
  * {@link TimesheetEntry} rows for all 5 Flyway-seeded employees under a
- * dedicated period (2031-05, distinct from every other test in this suite -
+ * dedicated period (2031-07, distinct from every other test in this suite -
  * see {@code AggregateHoursPerEmployeeStepIntegrationTest}'s Javadoc for why
  * a dedicated period matters), reproducing the sample CSV's real per-employee
  * hour distribution so both a normal case (Alice, 40h) and the overtime case
@@ -74,7 +74,7 @@ import org.springframework.test.context.ActiveProfiles;
 class CalculatePayslipsPartitionedStepIntegrationTest {
 
     private static final int PERIOD_YEAR = 2031;
-    private static final int PERIOD_MONTH = 5;
+    private static final int PERIOD_MONTH = 7;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
