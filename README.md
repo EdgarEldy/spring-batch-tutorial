@@ -306,6 +306,20 @@ Every branch from `feature/timesheet-import` onward is expected to ship all thre
 
 `.github/workflows/ci.yml` runs `mvn verify` across the whole suite, so all three layers execute on every push/PR; a branch's checklist is not complete until the full suite passes locally.
 
+### Test naming convention
+
+Every test method, at every layer (unit, integration, E2E), is named `_NN_Should<Outcome>_When<Condition>`: a two-digit, zero-padded sequence number (the order of the methods within the class, restarting at `_01_` in each class; JUnit does not enforce it, it is kept consistent by convention), followed by what is expected, followed by the condition that produces it.
+
+```java
+@Test
+void _01_ShouldFlagEmployeeForReview_WhenHoursExceedAnomalyThreshold() { ... }
+
+@Test
+void _02_ShouldProceedToCalculation_WhenAllHoursAreWithinThreshold() { ... }
+```
+
+No other naming style (`shouldX()`, `testX()`, `givenX_whenY_thenZ()`, `handleGeneric_mapsTo500()`) is used anywhere in this project's test suite. This applies to test methods only, not to `@BeforeEach`/`@AfterEach` helpers.
+
 ## Git commit convention
 
 All commits follow **Conventional Commits**, checked in CI on every Pull Request (`.github/workflows/pr-checks.yml`).
