@@ -45,7 +45,7 @@ class MonthlyPayrollJobE2ETest {
     private PayrollRunRepository payrollRunRepository;
 
     @Test
-    void launchingTheJobStopsCleanlyAfterImportTimesheets() throws Exception {
+    void _01_ShouldStopCleanlyAfterImportTimesheets_WhenJobIsLaunched() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("payrollRunId", payrollRun.getId())
