@@ -92,7 +92,7 @@ class CalculatePayslipsPartitionedStepIntegrationTest {
     private PayslipRepository payslipRepository;
 
     @Test
-    void fansOutAcrossPartitionsAndPersistsExpectedPayslipRowsForEveryEmployee() throws Exception {
+    void _01_ShouldPersistPayslipsForEveryEmployee_WhenStepFansOutAcrossPartitions() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         seedTimesheetData(payrollRun);
 
