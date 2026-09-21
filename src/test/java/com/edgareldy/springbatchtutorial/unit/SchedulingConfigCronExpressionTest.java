@@ -42,7 +42,7 @@ class SchedulingConfigCronExpressionTest {
     private final CronExpression cronExpression = CronExpression.parse(defaultCronLiteral());
 
     @Test
-    void fromMidJanuary_nextFireIsFirstOfFebruaryAtThreeAm() {
+    void _01_ShouldFireOnFirstOfFebruaryAtThreeAm_WhenStartingFromMidJanuary() {
         LocalDateTime reference = LocalDateTime.of(2026, 1, 15, 10, 0, 0);
 
         LocalDateTime next = cronExpression.next(reference);
@@ -51,7 +51,7 @@ class SchedulingConfigCronExpressionTest {
     }
 
     @Test
-    void fromExactlyAFireInstant_nextFireIsOneCalendarMonthLater() {
+    void _02_ShouldFireOneCalendarMonthLater_WhenStartingExactlyAtAFireInstant() {
         LocalDateTime reference = LocalDateTime.of(2026, 2, 1, 3, 0, 0);
 
         LocalDateTime next = cronExpression.next(reference);
@@ -64,7 +64,7 @@ class SchedulingConfigCronExpressionTest {
     }
 
     @Test
-    void fromLastInstantOfJanuary_nextFireIsStillFirstOfFebruaryAtThreeAm() {
+    void _03_ShouldStillFireOnFirstOfFebruaryAtThreeAm_WhenStartingFromLastInstantOfJanuary() {
         LocalDateTime reference = LocalDateTime.of(2026, 1, 31, 23, 59, 59);
 
         LocalDateTime next = cronExpression.next(reference);
@@ -73,7 +73,7 @@ class SchedulingConfigCronExpressionTest {
     }
 
     @Test
-    void fromDecember_nextFireRollsOverIntoNextYear() {
+    void _04_ShouldRollOverIntoNextYear_WhenStartingFromDecember() {
         LocalDateTime reference = LocalDateTime.of(2026, 12, 10, 0, 0, 0);
 
         LocalDateTime next = cronExpression.next(reference);
