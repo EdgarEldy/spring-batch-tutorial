@@ -28,7 +28,7 @@ class ActuatorHealthE2ETest {
     private int port;
 
     @Test
-    void healthEndpointReturnsOk() {
+    void _01_ShouldReturnStatusUp_WhenHealthEndpointIsCalled() {
         RestTestClient client = RestTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
