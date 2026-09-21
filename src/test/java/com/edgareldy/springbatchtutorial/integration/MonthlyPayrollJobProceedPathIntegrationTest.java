@@ -112,7 +112,7 @@ class MonthlyPayrollJobProceedPathIntegrationTest {
     }
 
     @Test
-    void runSeededBelowTheAnomalyThresholdCompletesThroughCalculationAndExport() throws Exception {
+    void _01_ShouldCompleteThroughCalculationAndExport_WhenSeededHoursAreBelowAnomalyThreshold() throws Exception {
         PayrollRun payrollRun = createStartedPayrollRun();
         seedTimesheetData(payrollRun);
 
